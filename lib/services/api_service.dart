@@ -63,10 +63,11 @@ class ApiService {
   /// Unencrypted, exempt from the version gate on the backend - safe to call
   /// before knowing whether this build is even allowed to talk to the API.
   Future<Map<String, dynamic>> checkVersion() async {
-    final res = await _send(() => _client.get(Uri.parse('$baseUrl/app/version')));
-    if (res.statusCode == 200) {
-      return jsonDecode(res.body) as Map<String, dynamic>;
-    }
+    final res = await _send(
+      () => _client.get(Uri.parse('$baseUrl/app/version')),
+      isAuthenticatedRequest: false,
+    );
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
     throw ApiException(_extractError(res));
   }
 
