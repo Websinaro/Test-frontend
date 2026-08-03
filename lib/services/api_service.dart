@@ -92,11 +92,14 @@ class ApiService {
 
     final encrypted = await CryptoService.instance.encryptPayload(body);
 
-    final res = await _send(() async => _client.post(
-          Uri.parse('$baseUrl/register'),
-          headers: await _headers({'Content-Type': 'application/json'}),
-          body: jsonEncode({'data': encrypted}),
-        ));
+    final res = await _send(
+      () async => _client.post(
+        Uri.parse('$baseUrl/register'),
+        headers: await _headers({'Content-Type': 'application/json'}),
+        body: jsonEncode({'data': encrypted}),
+      ),
+      isAuthenticatedRequest: false,
+    );
 
     if (res.statusCode == 200 || res.statusCode == 201) {
       final decrypted = await _decryptResponse(res);
