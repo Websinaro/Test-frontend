@@ -18,6 +18,8 @@ class WeatherDetailView extends StatelessWidget {
   final String locationLabel;
   final String? subLabel;
   final bool usingCache;
+  final bool locationDisabled;
+  final String? cacheMessage;
   final Future<void> Function() onRefresh;
 
   const WeatherDetailView({
@@ -27,6 +29,8 @@ class WeatherDetailView extends StatelessWidget {
     required this.onRefresh,
     this.subLabel,
     this.usingCache = false,
+    this.locationDisabled = false,
+    this.cacheMessage,
   });
 
   @override
