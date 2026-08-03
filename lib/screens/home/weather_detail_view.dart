@@ -117,14 +117,18 @@ class WeatherDetailView extends StatelessWidget {
                 color: AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.cloud_off_rounded, size: 16, color: AppColors.textMuted),
-                  SizedBox(width: 8),
+                  Icon(
+                    locationDisabled ? Icons.location_off_rounded : Icons.cloud_off_rounded,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'You\'re offline - showing the last saved update.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      cacheMessage ?? "You're offline - showing the last saved update.",
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
