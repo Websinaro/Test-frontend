@@ -14,7 +14,13 @@ class ApiException implements Exception {
   final String message;
   final bool isTimeout;
   final bool isUpdateRequired;
-  ApiException(this.message, {this.isTimeout = false, this.isUpdateRequired = false});
+  final bool isUnauthorized;
+  ApiException(
+    this.message, {
+    this.isTimeout = false,
+    this.isUpdateRequired = false,
+    this.isUnauthorized = false,
+  });
 
   @override
   String toString() => message;
