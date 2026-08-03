@@ -40,7 +40,7 @@ class ApiService {
   ApiService._internal();
   static final ApiService instance = ApiService._internal();
 
-  static const String baseUrl = 'https://kdmabw.onrender.com';
+  static const String baseUrl = 'https://test-ka-backend.onrender.com';
   static const Duration _timeout = Duration(seconds: 50);
 
   String? _cachedVersion;
