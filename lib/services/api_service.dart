@@ -40,7 +40,7 @@ class ApiService {
   ApiService._internal();
   static final ApiService instance = ApiService._internal();
 
-  static const String baseUrl = 'https://test-ka-backend.onrender.com';
+  static const String baseUrl = 'https://kdmabw.onrender.com';
   static const Duration _timeout = Duration(seconds: 50);
 
   String? _cachedVersion;
@@ -85,7 +85,7 @@ class ApiService {
 
     final encrypted = await CryptoService.instance.encryptPayload(body);
 
-    final res = await _send(() => _client.post(
+    final res = await _send(() async => _client.post(
           Uri.parse('$baseUrl/register'),
           headers: await _headers({'Content-Type': 'application/json'}),
           body: jsonEncode({'data': encrypted}),
@@ -99,7 +99,7 @@ class ApiService {
   }
 
   Future<String> login({required String email, required String password}) async {
-    final res = await _send(() => _client.post(
+    final res = await _send(() async => _client.post(
           Uri.parse('$baseUrl/login'),
           headers: await _headers({'Content-Type': 'application/x-www-form-urlencoded'}),
           body: {'email': email.trim(), 'password': password},
@@ -117,7 +117,7 @@ class ApiService {
   }
 
   Future<AppUser> fetchMe(String token) async {
-    final res = await _send(() => _client.get(
+    final res = await _send(() async => _client.get(
           Uri.parse('$baseUrl/me'),
           headers: await _headers({'Authorization': 'Bearer $token'}),
         ));
@@ -130,7 +130,7 @@ class ApiService {
   }
 
   Future<KeralaMapResponse> fetchKeralaMap() async {
-    final res = await _send(() => _client.get(
+    final res = await _send(() async => _client.get(
           Uri.parse('$baseUrl/weather/kerala-map'),
           headers: await _headers(),
         ));
@@ -150,7 +150,7 @@ class ApiService {
       'lat': lat.toString(),
       'lon': lon.toString(),
     });
-    final res = await _send(() => _client.get(uri, headers: await _headers()));
+    final res = await _send(() async => _client.get(uri, headers: await _headers()));
 
     if (res.statusCode == 200) {
       final decrypted = await _decryptResponse(res);
