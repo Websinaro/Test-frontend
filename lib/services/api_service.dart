@@ -174,7 +174,10 @@ class ApiService {
     return CryptoService.instance.decryptPayload(token);
   }
 
-  Future<http.Response> _send(Future<http.Response> Function() call) async {
+Future<http.Response> _send(
+  Future<http.Response> Function() call, {
+  bool isAuthenticatedRequest = true,
+  }) async {
     try {
       final res = await call().timeout(_timeout);
 
@@ -183,10 +186,12 @@ class ApiService {
         try {
           final body = jsonDecode(res.body) as Map<String, dynamic>;
           message = body['message']?.toString() ?? message;
-        } catch (_) {
-          // ignore - use default message
-        }
+        } catch (_) {}
         throw ApiException(message, isUpdateRequired: true);
+      }
+
+      if (isAuthenticatedRequest && res.statusCode == 401) {
+        throw ApiException('Your session has expired. Please log in again.', isUnauthorized: true);
       }
 
       return res;
