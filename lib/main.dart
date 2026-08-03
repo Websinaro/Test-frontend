@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import 'app.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
