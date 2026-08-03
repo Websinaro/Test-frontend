@@ -109,11 +109,14 @@ class ApiService {
   }
 
   Future<String> login({required String email, required String password}) async {
-    final res = await _send(() async => _client.post(
-          Uri.parse('$baseUrl/login'),
-          headers: await _headers({'Content-Type': 'application/x-www-form-urlencoded'}),
-          body: {'email': email.trim(), 'password': password},
-        ));
+    final res = await _send(
+      () async => _client.post(
+        Uri.parse('$baseUrl/login'),
+        headers: await _headers({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: {'email': email.trim(), 'password': password},
+      ),
+      isAuthenticatedRequest: false,
+    );
 
     if (res.statusCode == 200) {
       final decrypted = await _decryptResponse(res);
