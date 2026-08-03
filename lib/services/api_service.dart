@@ -201,20 +201,17 @@ class ApiService {
   }
 
   String _extractError(http.Response res) {
-    // Error responses (4xx/5xx) are left unencrypted by the backend middleware
-    // on purpose, so they can be parsed directly here.
     try {
       final body = jsonDecode(res.body);
       if (body is Map) {
         final detail = body['detail'];
         if (detail is String) return detail;
+        if (detail is bool) return 'That request could not be completed.';
         if (detail != null) return detail.toString();
         final error = body['error'];
         if (error is String) return error;
       }
-    } catch (_) {
-      // fall through
-    }
+    } catch (_) {}
     if (res.statusCode == 401) return 'Incorrect email or password.';
     if (res.statusCode == 400) return 'That request could not be completed.';
     if (res.statusCode >= 500) return 'The server hit an error. Please try again shortly.';
