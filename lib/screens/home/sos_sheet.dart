@@ -16,6 +16,10 @@ Future<void> showSosFlow(BuildContext context) async {
     return;
   }
 
+  // Always refresh right before deciding - cheap, and guarantees this
+  // check can never be stale no matter which screen last touched contacts.
+  await safety.refresh();
+
   if (!safety.hasContacts) {
     await _showNoContactsSheet(context);
     return;
