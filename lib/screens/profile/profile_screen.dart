@@ -7,6 +7,7 @@ import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../auth/welcome_screen.dart';
 import 'backup_screen.dart';
+import 'safety_contacts_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -122,6 +123,15 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          _ActionTile(
+            icon: Icons.shield_outlined,
+            title: 'Safety Circle',
+            subtitle: 'People notified with your live location during an SOS',
+            onTap: () => Navigator.of(context).push(
+              fadeScaleRoute(const SafetyContactsScreen()),
+            ),
+          ),
+          const SizedBox(height: 10),
           _ActionTile(
             icon: Icons.save_alt_rounded,
             title: 'Backup & Restore',

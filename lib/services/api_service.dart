@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import '../models/app_user.dart';
 import '../models/weather_models.dart';
 import 'crypto_service.dart';
+import 'auth_storage.dart';
+import '../models/safety_contact.dart';
 import '../models/kerala_map_models.dart';
 
 class ApiException implements Exception {
@@ -170,6 +172,105 @@ class ApiService {
       return WeatherResponse.fromJson(decrypted);
     }
     throw ApiException(_extractError(res));
+  }
+  
+  Future<List<SafetyContact>> fetchSafetyContacts() async {
+    final res = await _send(() async => _client.get(
+          Uri.parse('$baseUrl/safety-contacts'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final wrapper = jsonDecode(res.body) as Map<String, dynamic>;
+      final token = wrapper['data'] as String?;
+      if (token == null) throw ApiException('Unexpected response format from server.');
+      final decryptedList = await CryptoService.instance.decryptPayloadList(token);
+      return decryptedList.map((e) => SafetyContact.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<SafetyContact> addSafetyContact({
+    required String name,
+    String? relationship,
+    required String phone,
+    String? email,
+    String? address,
+  }) async {
+    final body = {
+      'name': name.trim(),
+      'relationship': relationship?.trim(),
+      'phone': phone.trim(),
+      'email': email?.trim(),
+      'address': address?.trim(),
+    };
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.post(
+          Uri.parse('$baseUrl/safety-contacts'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      final decrypted = await _decryptResponse(res);
+      return SafetyContact.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<SafetyContact> updateSafetyContact({
+    required int id,
+    required String name,
+    String? relationship,
+    required String phone,
+    String? email,
+    String? address,
+  }) async {
+    final body = {
+      'name': name.trim(),
+      'relationship': relationship?.trim(),
+      'phone': phone.trim(),
+      'email': email?.trim(),
+      'address': address?.trim(),
+    };
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.put(
+          Uri.parse('$baseUrl/safety-contacts/$id'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return SafetyContact.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<void> deleteSafetyContact(int id) async {
+    final res = await _send(() async => _client.delete(
+          Uri.parse('$baseUrl/safety-contacts/$id'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) return;
+    throw ApiException(_extractError(res));
+  }
+
+  Future<String> _requireToken() async {
+    final token = await AuthStorage.instance.readToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException('You need to be logged in for this.', isUnauthorized: true);
+    }
+    return token;
   }
 
   Future<Map<String, dynamic>> _decryptResponse(http.Response res) async {
