@@ -111,7 +111,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final safety = context.read<SafetyProvider>();
     final sosProvider = context.read<SosProvider>();
     bool safetyCheckFinished = false;
-    final safetyRefreshFuture = safety.refresh().then((_) => safetyCheckFinished = true);
+    final Future<void> safetyRefreshFuture = safety.refresh().then((_) {
+      safetyCheckFinished = true;
+    });
     unawaited(sosProvider.restoreActiveSos());
 
     await safetyRefreshFuture.timeout(
