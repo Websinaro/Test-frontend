@@ -50,7 +50,15 @@ class ApiService {
   static final ApiService instance = ApiService._internal();
 
   static const String baseUrl = 'https://test-ka-backend.onrender.com';
-  static const Duration _timeout = Duration(seconds: 50);
+
+  // Two-stage timeout instead of one flat 50s wait. Most requests to a
+  // warm server complete in well under a second, so a short first attempt
+  // fails fast and lets the UI say something useful ("waking up the
+  // server…") instead of sitting on a silent spinner. Only if that first
+  // attempt genuinely times out do we fall back to a longer wait to cover
+  // a cold start. See KEEP_ALIVE.md for the real fix (an always-on host).
+  static const Duration _fastTimeout = Duration(seconds: 8);
+  static const Duration _fallbackTimeout = Duration(seconds: 45);
 
   String? _cachedVersion;
   final http.Client _client = http.Client();
@@ -255,6 +263,20 @@ class ApiService {
     }
     throw ApiException(_extractError(res));
   }
+  
+  Future<SosAlert?> fetchMyActiveSos() async {
+    final res = await _send(() async => _client.get(
+          Uri.parse('$baseUrl/sos/mine/active'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      if (decrypted.isEmpty) return null; // no active SOS
+      return SosAlert.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
 
   Future<void> deleteSafetyContact(int id) async {
     final res = await _send(() async => _client.delete(
@@ -304,6 +326,19 @@ class ApiService {
       final decrypted = await _decryptResponse(res);
       return SosAlert.fromJson(decrypted);
     }
+
+    // The _send() retry means it's possible for the SOS to have actually
+    // been created on the server during the first (slow) attempt, with
+    // only the *response* getting lost to the client-side timeout. The
+    // retry then hits the backend's own duplicate-active-alert guard
+    // (400). Treat that specific case as success and fetch the real
+    // alert instead of surfacing a false "failed" error for an SOS that
+    // is, in fact, already active and already notifying protectors.
+    if (res.statusCode == 400) {
+      final existing = await fetchMyActiveSos();
+      if (existing != null) return existing;
+    }
+
     throw ApiException(_extractError(res));
   }
   
@@ -378,7 +413,17 @@ Future<http.Response> _send(
   bool isAuthenticatedRequest = true,
   }) async {
     try {
-      final res = await call().timeout(_timeout);
+      http.Response res;
+      try {
+        res = await call().timeout(_fastTimeout);
+      } on TimeoutException {
+        // First attempt timed out - most likely a sleeping free-tier
+        // instance waking up (see KEEP_ALIVE.md). Retry once with a much
+        // longer budget rather than failing the user's action outright;
+        // callers that care can check `isTimeout`/`isWakingUp` on the
+        // eventual exception to show a "waking up the server" message.
+        res = await call().timeout(_fallbackTimeout);
+      }
 
       if (res.statusCode == 426) {
         String message = 'Please update the app to continue.';

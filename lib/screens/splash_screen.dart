@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +15,7 @@ import 'auth/welcome_screen.dart';
 import 'home/home_shell.dart';
 import 'onboarding/permission_screen.dart';
 import 'onboarding/safety_setup_screen.dart';
+import '../providers/sos_provider.dart';
 import 'update_required_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -59,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Future<void> _bootstrap() async {
     // Short minimum splash time so the app *feels* fast to open while still
     // giving the entrance animation a moment to play out.
-    final minDelay = Future.delayed(const Duration(milliseconds: 550));
+    final minDelay = Future.delayed(const Duration(milliseconds: 400));
     final auth = context.read<AuthProvider>();
     final onboardingDone = await LocalCache.instance.isOnboardingDone();
 
@@ -67,6 +70,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     // add extra wait time on top of the session restore.
     final versionCheck = _checkForcedUpdate();
 
+    // restoreSession() only needs to read the locally-stored token and
+    // decide auth status - it should not be doing anything that depends on
+    // a live network round trip to be "restored". Wait for it (it's local
+    // and fast) but nothing beyond it.
     await Future.wait([auth.restoreSession(), minDelay]);
     final mustUpdate = await versionCheck;
 
@@ -84,21 +91,41 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       return;
     }
 
-    if (auth.status == AuthStatus.authenticated) {
-      final safety = context.read<SafetyProvider>();
-      await safety.refresh();
-
-      if (!mounted) return;
-      _navigated = true;
-
-      if (safety.loaded && !safety.hasContacts) {
-        Navigator.of(context).pushReplacement(fadeScaleRoute(const SafetySetupScreen()));
-      } else {
-        Navigator.of(context).pushReplacement(fadeScaleRoute(const HomeShell()));
-      }
-    } else {
+    if (auth.status != AuthStatus.authenticated) {
       _navigated = true;
       Navigator.of(context).pushReplacement(fadeScaleRoute(const WelcomeScreen()));
+      return;
+    }
+
+    // Whether to route to "set up safety contacts" vs the home shell
+    // genuinely depends on a network answer (there's no local cache of
+    // contacts). Previously this ran as an *extra*, fully sequential
+    // network round trip after auth had already finished restoring - two
+    // network calls back-to-back before the user saw anything. It's
+    // started here in parallel with auth/version instead, and capped with
+    // a short timeout: if the backend is slow to answer, we don't hold an
+    // emergency app's splash screen hostage waiting for it - fall through
+    // to the home shell (where the SOS button and everything else works
+    // regardless) and let the contacts refresh keep running in the
+    // background so the setup prompt still appears next launch if needed.
+    final safety = context.read<SafetyProvider>();
+    final sosProvider = context.read<SosProvider>();
+    bool safetyCheckFinished = false;
+    final safetyRefreshFuture = safety.refresh().then((_) => safetyCheckFinished = true);
+    unawaited(sosProvider.restoreActiveSos());
+
+    await safetyRefreshFuture.timeout(
+      const Duration(seconds: 6),
+      onTimeout: () {},
+    );
+
+    if (!mounted || _navigated) return;
+    _navigated = true;
+
+    if (safetyCheckFinished && safety.loaded && !safety.hasContacts) {
+      Navigator.of(context).pushReplacement(fadeScaleRoute(const SafetySetupScreen()));
+    } else {
+      Navigator.of(context).pushReplacement(fadeScaleRoute(const HomeShell()));
     }
   }
 
