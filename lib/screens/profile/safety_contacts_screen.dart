@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/safety_contact.dart';
-import '../../services/api_service.dart';
+import '../../providers/safety_provider.dart';
 import '../../theme/app_colors.dart';
 import 'safety_contact_form_screen.dart';
 
@@ -14,17 +14,14 @@ class SafetyContactsScreen extends StatefulWidget {
 }
 
 class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
-  late Future<List<SafetyContact>> _future;
-
   @override
   void initState() {
     super.initState();
-    _future = ApiService.instance.fetchSafetyContacts();
-  }
-
-  void _reload() {
-    setState(() {
-      _future = ApiService.instance.fetchSafetyContacts();
+    // Always re-fetch on open - this screen is the source people expect to
+    // trust, so it can't rely on whatever SafetyProvider last happened to
+    // have cached at splash time.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SafetyProvider>().refresh();
     });
   }
 
@@ -32,7 +29,9 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => SafetyContactFormScreen(existing: existing)),
     );
-    if (saved == true) _reload();
+    if (saved == true && mounted) {
+      await context.read<SafetyProvider>().refresh();
+    }
   }
 
   Future<void> _confirmDelete(SafetyContact contact) async {
@@ -52,13 +51,12 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       try {
-        await ApiService.instance.deleteSafetyContact(contact.id);
-        _reload();
-      } on ApiException catch (e) {
+        await context.read<SafetyProvider>().delete(contact.id);
+      } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
         }
       }
     }
@@ -74,18 +72,18 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
         onPressed: () => _openForm(),
         child: const Icon(Icons.add),
       ),
-      body: FutureBuilder<List<SafetyContact>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
+      body: Consumer<SafetyProvider>(
+        builder: (context, safety, _) {
+          if (safety.loading && !safety.loaded) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
+
+          if (safety.errorMessage != null && safety.contacts.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  snapshot.error.toString(),
+                  safety.errorMessage!,
                   style: const TextStyle(color: AppColors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
@@ -93,7 +91,7 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
             );
           }
 
-          final contacts = snapshot.data ?? [];
+          final contacts = safety.contacts;
 
           if (contacts.isEmpty) {
             return Center(
@@ -120,54 +118,57 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-            itemCount: contacts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final contact = contacts[index];
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                      child: Text(
-                        contact.name.isNotEmpty ? contact.name[0].toUpperCase() : '?',
-                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+          return RefreshIndicator(
+            onRefresh: () => safety.refresh(),
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+              itemCount: contacts.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final contact = contacts[index];
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                        child: Text(
+                          contact.name.isNotEmpty ? contact.name[0].toUpperCase() : '?',
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(contact.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-                          if (contact.relationship != null && contact.relationship!.isNotEmpty)
-                            Text(contact.relationship!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          Text(contact.phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(contact.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+                            if (contact.relationship != null && contact.relationship!.isNotEmpty)
+                              Text(contact.relationship!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            Text(contact.phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') _openForm(existing: contact);
+                          if (value == 'delete') _confirmDelete(contact);
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          PopupMenuItem(value: 'delete', child: Text('Remove')),
                         ],
                       ),
-                    ),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'edit') _openForm(existing: contact);
-                        if (value == 'delete') _confirmDelete(contact);
-                      },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        PopupMenuItem(value: 'delete', child: Text('Remove')),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+                    ],
+                  ),
+                );
+              },
+            ),
           );
         },
       ),
