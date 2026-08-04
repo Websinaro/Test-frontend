@@ -11,6 +11,7 @@ import 'crypto_service.dart';
 import 'auth_storage.dart';
 import '../models/safety_contact.dart';
 import '../models/kerala_map_models.dart';
+import '../models/sos_models.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -280,6 +281,80 @@ class ApiService {
       throw ApiException('Unexpected response format from server.');
     }
     return CryptoService.instance.decryptPayload(token);
+  }
+  
+  Future<SosAlert> createSos({
+    required double lat,
+    required double lon,
+    String? message,
+  }) async {
+    final body = {'latitude': lat, 'longitude': lon, 'message': message};
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.post(
+          Uri.parse('$baseUrl/sos'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      final decrypted = await _decryptResponse(res);
+      return SosAlert.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<SosAlert> updateSosLocation({
+    required int sosId,
+    required double lat,
+    required double lon,
+  }) async {
+    final body = {'latitude': lat, 'longitude': lon};
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.patch(
+          Uri.parse('$baseUrl/sos/$sosId/location'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return SosAlert.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<SosAlert> resolveSos(int sosId) async {
+    final res = await _send(() async => _client.post(
+          Uri.parse('$baseUrl/sos/$sosId/resolve'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return SosAlert.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<SosAlert> fetchSos(int sosId) async {
+    final res = await _send(() async => _client.get(
+          Uri.parse('$baseUrl/sos/$sosId'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return SosAlert.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
   }
 
 Future<http.Response> _send(

@@ -6,6 +6,7 @@ import 'providers/safety_provider.dart';
 import 'providers/weather_provider.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
+import 'providers/sos_provider.dart';
 
 class WeBAlertApp extends StatelessWidget {
   const WeBAlertApp({super.key});
@@ -17,6 +18,7 @@ class WeBAlertApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProvider(create: (_) => SafetyProvider()),
+        ChangeNotifierProvider(create: (_) => SosProvider()),
       ],
       child: MaterialApp(
         title: 'WeBAlert',
