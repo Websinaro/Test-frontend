@@ -41,6 +41,12 @@ class SafetyProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> delete(int contactId) async {
+    await _api.deleteSafetyContact(contactId);
+    contacts = contacts.where((c) => c.id != contactId).toList();
+    notifyListeners();
+  }
+
   void reset() {
     contacts = [];
     loaded = false;
