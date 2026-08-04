@@ -306,6 +306,22 @@ class ApiService {
     }
     throw ApiException(_extractError(res));
   }
+  
+  Future<void> registerDeviceToken({required String token, required String platform}) async {
+    final body = {'fcm_token': token, 'platform': platform};
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.post(
+          Uri.parse('$baseUrl/device-token'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode != 200) throw ApiException(_extractError(res));
+  }
 
   Future<SosAlert> updateSosLocation({
     required int sosId,

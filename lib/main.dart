@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'app.dart';
+import 'firebase_options.dart';
+import 'services/push_notification_service.dart';
 
-final navigatorKey = GlobalKey<NavigatorState>();
-
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock the status/navigation bars to a dark, transparent style matching
-  // the app's AMOLED theme - avoids a light system bar flashing over a
-  // black UI.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await PushNotificationService.instance.initialize();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
