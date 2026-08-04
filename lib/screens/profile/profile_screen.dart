@@ -8,6 +8,7 @@ import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../auth/welcome_screen.dart';
 import 'backup_screen.dart';
+import '../profile/safety_contacts_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
