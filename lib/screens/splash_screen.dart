@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/safety_provider.dart';
 import '../services/api_service.dart';
 import '../services/local_cache.dart';
 import '../services/version_service.dart';
@@ -11,6 +12,7 @@ import '../utils/page_transitions.dart';
 import 'auth/welcome_screen.dart';
 import 'home/home_shell.dart';
 import 'onboarding/permission_screen.dart';
+import 'onboarding/safety_setup_screen.dart';
 import 'update_required_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -76,16 +78,26 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       return;
     }
 
-    _navigated = true;
-
     if (!onboardingDone) {
+      _navigated = true;
       Navigator.of(context).pushReplacement(fadeScaleRoute(const PermissionScreen()));
       return;
     }
 
     if (auth.status == AuthStatus.authenticated) {
-      Navigator.of(context).pushReplacement(fadeScaleRoute(const HomeShell()));
+      final safety = context.read<SafetyProvider>();
+      await safety.refresh();
+
+      if (!mounted) return;
+      _navigated = true;
+
+      if (safety.loaded && !safety.hasContacts) {
+        Navigator.of(context).pushReplacement(fadeScaleRoute(const SafetySetupScreen()));
+      } else {
+        Navigator.of(context).pushReplacement(fadeScaleRoute(const HomeShell()));
+      }
     } else {
+      _navigated = true;
       Navigator.of(context).pushReplacement(fadeScaleRoute(const WelcomeScreen()));
     }
   }

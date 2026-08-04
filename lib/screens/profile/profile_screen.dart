@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/safety_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../auth/welcome_screen.dart';
 import 'backup_screen.dart';
-import 'safety_contacts_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -32,6 +32,9 @@ class ProfileScreen extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       await context.read<AuthProvider>().logout();
       if (context.mounted) {
+        context.read<SafetyProvider>().reset();
+      }
+      if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           fadeScaleRoute(const WelcomeScreen()),
           (route) => false,
@@ -39,6 +42,8 @@ class ProfileScreen extends StatelessWidget {
       }
     }
   }
+
+  // ...rest of the file unchanged
 
   @override
   Widget build(BuildContext context) {
