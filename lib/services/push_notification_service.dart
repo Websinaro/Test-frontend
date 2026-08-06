@@ -128,7 +128,7 @@ class PushNotificationService {
     onSosNotificationTapped?.call(sosId, data['sender_name']?.toString() ?? 'Someone', lat, lon);
   }
   
-  void Function(int sosId, String senderName, double lat, double lon)? onSosNotificationTapped;
+  //void Function(int sosId, String senderName, double lat, double lon)? onSosNotificationTapped;
   void Function()? onOfficialAlertTapped;
 
   Future<void> _showOfficialAlertNotification(RemoteMessage message) async {
