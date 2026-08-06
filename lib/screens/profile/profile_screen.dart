@@ -44,8 +44,7 @@ class ProfileScreen extends StatelessWidget {
         );
       }
     }
-
-  // ...rest of the file unchanged
+  }
 
   @override
   Widget build(BuildContext context) {
