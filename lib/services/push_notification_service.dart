@@ -20,6 +20,11 @@ class PushNotificationService {
   /// Public so the top-level background handler in main.dart can reuse the
   /// exact same notification logic as the foreground listener.
   Future<void> showSosNotification(RemoteMessage message) => _showSosNotification(message);
+
+  /// Same as above, for official alerts - the background isolate needs
+  /// this too, not just the foreground listener.
+  Future<void> showOfficialAlertNotification(RemoteMessage message) =>
+      _showOfficialAlertNotification(message);
   
   Future<void> initialize() async {
     await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
