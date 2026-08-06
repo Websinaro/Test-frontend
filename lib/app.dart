@@ -7,8 +7,11 @@ import 'providers/sos_provider.dart';
 import 'providers/weather_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/sos/sos_live_map_screen.dart';
+import 'providers/alerts_provider.dart';
+import 'services/api_service.dart';
 import 'services/push_notification_service.dart';
 import 'theme/app_theme.dart';
+import 'screens/alerts/alerts_feed_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -20,13 +23,28 @@ class WeBAlertApp extends StatefulWidget {
 }
 
 class _WeBAlertAppState extends State<WeBAlertApp> {
+  final _authProvider = AuthProvider();
+  final _safetyProvider = SafetyProvider();
+  final _alertsProvider = AlertsProvider();
+
   @override
   void initState() {
     super.initState();
+
     PushNotificationService.instance.onSosNotificationTapped = (sosId, senderName, lat, lon) {
       navigatorKey.currentState?.push(MaterialPageRoute(
         builder: (_) => SosLiveMapScreen(sosId: sosId, senderName: senderName, initialLat: lat, initialLon: lon),
       ));
+    };
+
+    PushNotificationService.instance.onOfficialAlertTapped = () {
+      navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const AlertsFeedScreen()));
+    };
+
+    ApiService.instance.onUnauthorized = () {
+      _authProvider.forceLogout(reason: 'Your session has expired. Please log in again.');
+      _safetyProvider.reset();
+      _alertsProvider.reset();
     };
   }
 
@@ -34,9 +52,10 @@ class _WeBAlertAppState extends State<WeBAlertApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: _authProvider),
+        ChangeNotifierProvider.value(value: _safetyProvider),
+        ChangeNotifierProvider.value(value: _alertsProvider),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
-        ChangeNotifierProvider(create: (_) => SafetyProvider()),
         ChangeNotifierProvider(create: (_) => SosProvider()),
       ],
       child: MaterialApp(

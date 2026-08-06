@@ -40,8 +40,13 @@ class PushNotificationService {
     // Foreground: FCM doesn't auto-show a system notification while the app
     // is open, so we display it ourselves via flutter_local_notifications
     // using the same high-priority channel.
-    FirebaseMessaging.onMessage.listen(_showSosNotification);
-
+    FirebaseMessaging.onMessage.listen((message) {
+      if (message.data['type'] == 'sos_alert') {
+        _showSosNotification(message);
+      } else if (message.data['type'] == 'official_alert') {
+        _showOfficialAlertNotification(message);
+      }
+    });
     // Tapped from background (app was minimized).
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _handleDataPayload(message.data);
@@ -109,6 +114,11 @@ class PushNotificationService {
   }
 
   void _handleDataPayload(Map<String, dynamic> data) {
+    if (data['type'] == 'official_alert') {
+      onOfficialAlertTapped?.call();
+      return;
+    }
+
     if (data['type'] != 'sos_alert') return;
     final sosId = int.tryParse('${data['sos_id']}');
     final lat = double.tryParse('${data['latitude']}');
@@ -117,4 +127,33 @@ class PushNotificationService {
 
     onSosNotificationTapped?.call(sosId, data['sender_name']?.toString() ?? 'Someone', lat, lon);
   }
+  
+  void Function(int sosId, String senderName, double lat, double lon)? onSosNotificationTapped;
+  void Function()? onOfficialAlertTapped;
+
+  Future<void> _showOfficialAlertNotification(RemoteMessage message) async {
+    if (message.data['type'] != 'official_alert') return;
+
+    final title = message.data['title'] ?? 'Official Alert';
+    final body = message.data['body'] ?? '';
+    final payload = jsonEncode(message.data);
+
+    const androidDetails = AndroidNotificationDetails(
+      'official_alerts',
+      'Official Alerts',
+      channelDescription: 'Warnings and bulletins from your state coordinator',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+
+    await _local.show(
+      title.hashCode,
+      title,
+      body,
+      const NotificationDetails(android: androidDetails),
+      payload: payload,
+    );
+  }
+  
 }
