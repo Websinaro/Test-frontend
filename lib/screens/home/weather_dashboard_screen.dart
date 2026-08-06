@@ -60,8 +60,6 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                 child: Icon(Icons.workspace_premium_rounded, color: AppColors.presidentGold, size: 20),
               ),
             ),
-        ],
-        actions: [
           IconButton(
             icon: const Icon(Icons.campaign_outlined),
             tooltip: 'Official Alerts',
