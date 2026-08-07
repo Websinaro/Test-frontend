@@ -24,7 +24,32 @@ class PushNotificationService {
   /// Public so the top-level background handler in main.dart can reuse the
   /// exact same notification logic as the foreground listener.
   Future<void> showSosNotification(RemoteMessage message) => _showSosNotification(message);
-  
+
+  /// Public entry point that dispatches ANY supported alert type (SOS,
+  /// admin/president broadcast, and future types) to its handler. The
+  /// top-level background handler in main.dart must use this - not
+  /// showSosNotification - so alerts other than SOS still display when
+  /// the app is backgrounded or fully terminated. Also (re)initializes
+  /// the local-notifications plugin, since a background message runs in
+  /// its own fresh isolate that never ran initialize().
+  Future<void> showAnyNotification(RemoteMessage message) async {
+    await _ensureLocalNotificationsInitialized();
+    await _showAnyNotification(message);
+  }
+
+  bool _localInitialized = false;
+
+  Future<void> _ensureLocalNotificationsInitialized() async {
+    if (_localInitialized) return;
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(android: androidInit);
+    await _local.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (response) => _handlePayload(response.payload),
+    );
+    _localInitialized = true;
+  }
+
   Future<void> initialize() async {
     await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
 
@@ -33,13 +58,7 @@ class PushNotificationService {
     // (they might grant it after first install, on a later app open).
     await DndService.instance.createSosChannel();
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidInit);
-
-    await _local.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (response) => _handlePayload(response.payload),
-    );
+    await _ensureLocalNotificationsInitialized();
 
     // Foreground: FCM doesn't auto-show a system notification while the app
     // is open, so we display it ourselves via flutter_local_notifications

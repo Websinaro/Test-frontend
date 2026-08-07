@@ -13,7 +13,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Runs in a separate isolate - must re-initialize Firebase here even
   // though main() already did it, since this isolate doesn't share state.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await PushNotificationService.instance.showSosNotification(message);
+  await PushNotificationService.instance.showAnyNotification(message);
 }
 
 void main() async {
