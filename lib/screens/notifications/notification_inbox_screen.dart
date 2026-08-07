@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/notification_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/backend_time.dart';
 import '../../utils/districts.dart';
 import '../../widgets/alert_banner.dart';
 import '../../widgets/error_retry_view.dart';
@@ -28,7 +29,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
   }
 
   String _formatTime(String iso) {
-    final dt = DateTime.tryParse(iso);
+    final dt = parseBackendUtc(iso);
     if (dt == null) return '';
     return DateFormat('MMM d, h:mm a').format(dt.toLocal());
   }

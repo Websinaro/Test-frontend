@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/president_dashboard.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/backend_time.dart';
 import '../../utils/districts.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/error_retry_view.dart';
@@ -287,7 +288,7 @@ class _ActiveSosRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dt = DateTime.tryParse(sos.createdTime);
+    final dt = parseBackendUtc(sos.createdTime);
     final timeLabel = dt != null ? DateFormat('MMM d, h:mm a').format(dt.toLocal()) : '';
 
     return Container(

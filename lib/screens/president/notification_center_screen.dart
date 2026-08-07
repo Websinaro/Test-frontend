@@ -6,6 +6,7 @@ import '../../models/notification_item.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/backend_time.dart';
 import '../../utils/districts.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/alert_banner.dart';
@@ -31,7 +32,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   }
 
   String _formatTime(String iso) {
-    final dt = DateTime.tryParse(iso);
+    final dt = parseBackendUtc(iso);
     if (dt == null) return '';
     return DateFormat('MMM d, h:mm a').format(dt.toLocal());
   }
