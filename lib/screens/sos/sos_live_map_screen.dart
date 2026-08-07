@@ -55,7 +55,7 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
 
   Future<void> _startWatchingMyLocation() async {
     try {
-      final current = await LocationService.instance.getCurrentPosition();
+      final current = await LocationService.instance.getAccuratePosition();
       _onMyPosition(current);
     } catch (e) {
       if (mounted) setState(() => _locationError = e.toString());

@@ -39,7 +39,7 @@ class SosProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final position = await LocationService.instance.getCurrentPosition();
+      final position = await LocationService.instance.getAccuratePosition();
       final alert = await _api.createSos(
         lat: position.latitude,
         lon: position.longitude,
@@ -74,7 +74,7 @@ class SosProvider extends ChangeNotifier {
         return;
       }
       try {
-        final position = await LocationService.instance.getCurrentPosition();
+        final position = await LocationService.instance.getAccuratePosition();
         await _api.updateSosLocation(sosId: alert.id, lat: position.latitude, lon: position.longitude);
       } catch (_) {
         // Skip this tick silently - a single missed update isn't worth
