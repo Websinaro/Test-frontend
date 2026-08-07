@@ -13,18 +13,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Runs in a separate isolate - must re-initialize Firebase here even
   // though main() already did it, since this isolate doesn't share state.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Must branch on type exactly like the foreground onMessage listener
-  // does. Previously this always called showSosNotification, which
-  // silently no-ops for anything that isn't a 'sos_alert' - so official
-  // alerts never showed a notification unless the app happened to be
-  // open in the foreground at the moment they arrived.
-  final type = message.data['type'];
-  if (type == 'sos_alert') {
-    await PushNotificationService.instance.showSosNotification(message);
-  } else if (type == 'official_alert') {
-    await PushNotificationService.instance.showOfficialAlertNotification(message);
-  }
+  await PushNotificationService.instance.showSosNotification(message);
 }
 
 void main() async {

@@ -11,8 +11,6 @@ import '../../widgets/district_alert_card.dart';
 import '../../widgets/error_retry_view.dart';
 import 'weather_detail_screen.dart';
 import 'weather_detail_view.dart';
-import '../alerts/alerts_feed_screen.dart';
-import '../../utils/page_transitions.dart'; 
 
 class WeatherDashboardScreen extends StatefulWidget {
   const WeatherDashboardScreen({super.key});
@@ -60,11 +58,6 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
                 child: Icon(Icons.workspace_premium_rounded, color: AppColors.presidentGold, size: 20),
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.campaign_outlined),
-            tooltip: 'Official Alerts',
-            onPressed: () => Navigator.of(context).push(fadeScaleRoute(const AlertsFeedScreen())),
-          ),
         ],
       ),
       body: isPresident ? const _PresidentOverviewBody() : const _CitizenWeatherBody(),

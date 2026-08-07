@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
@@ -5,6 +7,7 @@ import '../services/api_service.dart';
 import '../services/auth_storage.dart';
 import '../services/connectivity_service.dart';
 import '../services/local_cache.dart';
+import '../services/push_notification_service.dart';
 
 enum AuthStatus { unknown, authenticating, authenticated, unauthenticated }
 
@@ -52,6 +55,10 @@ class AuthProvider extends ChangeNotifier {
       isOfflineSession = false;
       await LocalCache.instance.saveUser(user);
       status = AuthStatus.authenticated;
+      // We now know the stored token is valid - make sure this device is
+      // registered to receive SOS pushes. Fire-and-forget so a slow/failed
+      // registration never blocks getting the user into the app.
+      unawaited(PushNotificationService.instance.registerCurrentToken());
     } on ApiException catch (e) {
       if (e.isUnauthorized) {
         // Token is genuinely invalid/expired - force a real login, do not
@@ -130,6 +137,12 @@ class AuthProvider extends ChangeNotifier {
 
       status = AuthStatus.authenticated;
       notifyListeners();
+      // Fresh login - this device now has a valid auth token for the first
+      // time this session, so (re)register it for SOS pushes. Without this,
+      // a brand-new login never gets registered until the app is fully
+      // restarted, since initialize() at app startup runs before login and
+      // silently no-ops with no token.
+      unawaited(PushNotificationService.instance.registerCurrentToken());
     } on ApiException catch (e) {
       errorMessage = e.message;
       status = AuthStatus.unauthenticated;

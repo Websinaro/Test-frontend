@@ -20,11 +20,6 @@ class PushNotificationService {
   /// Public so the top-level background handler in main.dart can reuse the
   /// exact same notification logic as the foreground listener.
   Future<void> showSosNotification(RemoteMessage message) => _showSosNotification(message);
-
-  /// Same as above, for official alerts - the background isolate needs
-  /// this too, not just the foreground listener.
-  Future<void> showOfficialAlertNotification(RemoteMessage message) =>
-      _showOfficialAlertNotification(message);
   
   Future<void> initialize() async {
     await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
@@ -45,13 +40,8 @@ class PushNotificationService {
     // Foreground: FCM doesn't auto-show a system notification while the app
     // is open, so we display it ourselves via flutter_local_notifications
     // using the same high-priority channel.
-    FirebaseMessaging.onMessage.listen((message) {
-      if (message.data['type'] == 'sos_alert') {
-        _showSosNotification(message);
-      } else if (message.data['type'] == 'official_alert') {
-        _showOfficialAlertNotification(message);
-      }
-    });
+    FirebaseMessaging.onMessage.listen(_showSosNotification);
+
     // Tapped from background (app was minimized).
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _handleDataPayload(message.data);
@@ -64,19 +54,39 @@ class PushNotificationService {
     }
 
     // Register/refresh this device's token with the backend so protectors
-    // can actually be reached.
+    // can actually be reached. At a cold start this normally runs before
+    // the user is logged in (see registerCurrentToken() below for why that
+    // matters), so it's expected to no-op here on a fresh install.
+    await registerCurrentToken();
+    FirebaseMessaging.instance.onTokenRefresh.listen(_registerToken);
+  }
+
+  /// Fetches the current FCM token and (re)registers it with the backend.
+  ///
+  /// Public and safe to call any time we know we have a valid auth token -
+  /// specifically right after a successful login and after a successful
+  /// session restore - not just from initialize(). initialize() runs at
+  /// app startup before the user has necessarily logged in, so
+  /// registerDeviceToken() fails there (no auth token yet) and, since that
+  /// failure is swallowed as non-fatal, nothing retried it. In practice
+  /// that meant a freshly-logged-in user's device was never registered as
+  /// a protector for the rest of that session - any SOS sent to them
+  /// silently failed to deliver until they force-closed and reopened the
+  /// app. Calling this again right after login/restoreSession closes that
+  /// gap.
+  Future<void> registerCurrentToken() async {
     final token = await FirebaseMessaging.instance.getToken();
     if (token != null) {
       await _registerToken(token);
     }
-    FirebaseMessaging.instance.onTokenRefresh.listen(_registerToken);
   }
 
   Future<void> _registerToken(String token) async {
     try {
       await ApiService.instance.registerDeviceToken(token: token, platform: 'android');
     } catch (_) {
-      // Non-fatal - will retry on next app open / token refresh.
+      // Non-fatal - will retry on next app open / token refresh / explicit
+      // registerCurrentToken() call (e.g. right after login).
     }
   }
 
@@ -119,11 +129,6 @@ class PushNotificationService {
   }
 
   void _handleDataPayload(Map<String, dynamic> data) {
-    if (data['type'] == 'official_alert') {
-      onOfficialAlertTapped?.call();
-      return;
-    }
-
     if (data['type'] != 'sos_alert') return;
     final sosId = int.tryParse('${data['sos_id']}');
     final lat = double.tryParse('${data['latitude']}');
@@ -132,33 +137,4 @@ class PushNotificationService {
 
     onSosNotificationTapped?.call(sosId, data['sender_name']?.toString() ?? 'Someone', lat, lon);
   }
-  
-  //void Function(int sosId, String senderName, double lat, double lon)? onSosNotificationTapped;
-  void Function()? onOfficialAlertTapped;
-
-  Future<void> _showOfficialAlertNotification(RemoteMessage message) async {
-    if (message.data['type'] != 'official_alert') return;
-
-    final title = message.data['title'] ?? 'Official Alert';
-    final body = message.data['body'] ?? '';
-    final payload = jsonEncode(message.data);
-
-    const androidDetails = AndroidNotificationDetails(
-      'official_alerts',
-      'Official Alerts',
-      channelDescription: 'Warnings and bulletins from your state coordinator',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-    );
-
-    await _local.show(
-      title.hashCode,
-      title,
-      body,
-      const NotificationDetails(android: androidDetails),
-      payload: payload,
-    );
-  }
-  
 }

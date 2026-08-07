@@ -12,7 +12,6 @@ import 'auth_storage.dart';
 import '../models/safety_contact.dart';
 import '../models/kerala_map_models.dart';
 import '../models/sos_models.dart';
-import '../models/official_alert.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -50,7 +49,7 @@ class ApiService {
   ApiService._internal();
   static final ApiService instance = ApiService._internal();
 
-  static const String baseUrl = 'https://test-ka-backend.onrender.com';
+  static const String baseUrl = 'https://kdmabw.onrender.com';
   static const Duration _timeout = Duration(seconds: 50);
 
   String? _cachedVersion;
@@ -352,63 +351,6 @@ class ApiService {
       return SosAlert.fromJson(decrypted);
     }
     throw ApiException(_extractError(res));
-  }
-  
-  Future<List<OfficialAlert>> fetchAlerts() async {
-    final res = await _send(() async => _client.get(
-          Uri.parse('$baseUrl/alerts'),
-          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
-        ));
-
-    if (res.statusCode == 200) {
-      final wrapper = jsonDecode(res.body) as Map<String, dynamic>;
-      final token = wrapper['data'] as String?;
-      if (token == null) throw ApiException('Unexpected response format from server.');
-      final decryptedList = await CryptoService.instance.decryptPayloadList(token);
-      return decryptedList.map((e) => OfficialAlert.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    throw ApiException(_extractError(res));
-  }
-
-  Future<OfficialAlert> createAlert({
-    required String title,
-    required String message,
-    required String severity,
-    String? district,
-    int? expiresInHours,
-  }) async {
-    final body = {
-      'title': title.trim(),
-      'message': message.trim(),
-      'severity': severity,
-      'district': district,
-      'expires_in_hours': expiresInHours,
-    };
-    final encrypted = await CryptoService.instance.encryptPayload(body);
-
-    final res = await _send(() async => _client.post(
-          Uri.parse('$baseUrl/alerts'),
-          headers: await _headers({
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${await _requireToken()}',
-          }),
-          body: jsonEncode({'data': encrypted}),
-        ));
-
-    if (res.statusCode == 200 || res.statusCode == 201) {
-      final decrypted = await _decryptResponse(res);
-      return OfficialAlert.fromJson(decrypted);
-    }
-    throw ApiException(_extractError(res));
-  }
-
-  Future<void> deleteAlert(int id) async {
-    final res = await _send(() async => _client.delete(
-          Uri.parse('$baseUrl/alerts/$id'),
-          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
-        ));
-
-    if (res.statusCode != 200) throw ApiException(_extractError(res));
   }
 
   Future<SosAlert> resolveSos(int sosId) async {

@@ -9,7 +9,6 @@ import '../../utils/districts.dart';
 import '../auth/welcome_screen.dart';
 import 'backup_screen.dart';
 import '../profile/safety_contacts_screen.dart';
-import '../../providers/alerts_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -35,7 +34,6 @@ class ProfileScreen extends StatelessWidget {
       await context.read<AuthProvider>().logout();
       if (context.mounted) {
         context.read<SafetyProvider>().reset();
-        context.read<AlertsProvider>().reset();
       }
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -45,6 +43,8 @@ class ProfileScreen extends StatelessWidget {
       }
     }
   }
+
+  // ...rest of the file unchanged
 
   @override
   Widget build(BuildContext context) {
