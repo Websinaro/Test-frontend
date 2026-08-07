@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../auth/welcome_screen.dart';
 import '../map/kerala_map_screen.dart';
+import '../president/president_dashboard_screen.dart';
 import '../profile/profile_screen.dart';
 import 'districts_screen.dart';
 import 'sos_sheet.dart';
@@ -44,7 +45,7 @@ class _HomeShellState extends State<HomeShell> {
         final isPresident = auth.currentUser?.isPresident ?? false;
 
         final pages = [
-          const WeatherDashboardScreen(),
+          isPresident ? const PresidentDashboardScreen() : const WeatherDashboardScreen(),
           const DistrictsScreen(),
           const KeralaMapScreen(),
           const ProfileScreen(),

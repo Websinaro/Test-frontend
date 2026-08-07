@@ -12,6 +12,8 @@ import 'auth_storage.dart';
 import '../models/safety_contact.dart';
 import '../models/kerala_map_models.dart';
 import '../models/sos_models.dart';
+import '../models/notification_item.dart';
+import '../models/president_dashboard.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -49,7 +51,7 @@ class ApiService {
   ApiService._internal();
   static final ApiService instance = ApiService._internal();
 
-  static const String baseUrl = 'https://test-ka-backend.onrender.com';
+  static const String baseUrl = 'https://kdmabw.onrender.com';
   static const Duration _timeout = Duration(seconds: 50);
 
   String? _cachedVersion;
@@ -390,6 +392,118 @@ class ApiService {
       final decrypted = await _decryptResponse(res);
       return SosAlert.fromJson(decrypted);
     }
+    throw ApiException(_extractError(res));
+  }
+
+  // ---------------------------------------------------------------------
+  // President dashboard
+  // ---------------------------------------------------------------------
+
+  Future<PresidentDashboard> fetchPresidentDashboard() async {
+    final res = await _send(() async => _client.get(
+          Uri.parse('$baseUrl/president/dashboard'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return PresidentDashboard.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  // ---------------------------------------------------------------------
+  // Notification Center (president: full CRUD, citizens: read own inbox)
+  // ---------------------------------------------------------------------
+
+  Future<List<NotificationItem>> fetchNotifications() async {
+    final res = await _send(() async => _client.get(
+          Uri.parse('$baseUrl/notifications'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) {
+      final wrapper = jsonDecode(res.body) as Map<String, dynamic>;
+      final token = wrapper['data'] as String?;
+      if (token == null) throw ApiException('Unexpected response format from server.');
+      final decryptedList = await CryptoService.instance.decryptPayloadList(token);
+      return decryptedList.map((e) => NotificationItem.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<NotificationItem> createNotification({
+    required String title,
+    required String message,
+    required String severity,
+    String? district,
+  }) async {
+    final body = {
+      'title': title.trim(),
+      'message': message.trim(),
+      'severity': severity,
+      'district': district,
+    };
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.post(
+          Uri.parse('$baseUrl/notifications'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      final decrypted = await _decryptResponse(res);
+      return NotificationItem.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<NotificationItem> updateNotification({
+    required int id,
+    String? title,
+    String? message,
+    String? severity,
+    String? district,
+    bool clearDistrict = false,
+    bool? active,
+  }) async {
+    final body = {
+      if (title != null) 'title': title.trim(),
+      if (message != null) 'message': message.trim(),
+      if (severity != null) 'severity': severity,
+      if (district != null) 'district': district,
+      'clear_district': clearDistrict,
+      if (active != null) 'active': active,
+    };
+    final encrypted = await CryptoService.instance.encryptPayload(body);
+
+    final res = await _send(() async => _client.put(
+          Uri.parse('$baseUrl/notifications/$id'),
+          headers: await _headers({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${await _requireToken()}',
+          }),
+          body: jsonEncode({'data': encrypted}),
+        ));
+
+    if (res.statusCode == 200) {
+      final decrypted = await _decryptResponse(res);
+      return NotificationItem.fromJson(decrypted);
+    }
+    throw ApiException(_extractError(res));
+  }
+
+  Future<void> deleteNotification(int id) async {
+    final res = await _send(() async => _client.delete(
+          Uri.parse('$baseUrl/notifications/$id'),
+          headers: await _headers({'Authorization': 'Bearer ${await _requireToken()}'}),
+        ));
+
+    if (res.statusCode == 200) return;
     throw ApiException(_extractError(res));
   }
 

@@ -9,6 +9,7 @@ import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../../widgets/district_alert_card.dart';
 import '../../widgets/error_retry_view.dart';
+import '../notifications/notification_inbox_screen.dart';
 import 'weather_detail_screen.dart';
 import 'weather_detail_view.dart';
 
@@ -57,6 +58,12 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
               child: Center(
                 child: Icon(Icons.workspace_premium_rounded, color: AppColors.presidentGold, size: 20),
               ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Alerts',
+              onPressed: () => Navigator.of(context).push(fadeScaleRoute(const NotificationInboxScreen())),
             ),
         ],
       ),

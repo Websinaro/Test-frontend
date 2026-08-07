@@ -17,6 +17,10 @@ class PushNotificationService {
   final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
   void Function(int sosId, String senderName, double lat, double lon)? onSosNotificationTapped;
 
+  /// Fired when the user taps a president/admin broadcast alert
+  /// notification. Args: (notificationId, title).
+  void Function(int notificationId, String title)? onAdminAlertTapped;
+
   /// Public so the top-level background handler in main.dart can reuse the
   /// exact same notification logic as the foreground listener.
   Future<void> showSosNotification(RemoteMessage message) => _showSosNotification(message);
@@ -40,7 +44,7 @@ class PushNotificationService {
     // Foreground: FCM doesn't auto-show a system notification while the app
     // is open, so we display it ourselves via flutter_local_notifications
     // using the same high-priority channel.
-    FirebaseMessaging.onMessage.listen(_showSosNotification);
+    FirebaseMessaging.onMessage.listen(_showAnyNotification);
 
     // Tapped from background (app was minimized).
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
@@ -120,6 +124,52 @@ class PushNotificationService {
     );
   }
 
+  /// Dispatches to the right handler based on `data.type` - kept as one
+  /// entry point for FirebaseMessaging.onMessage so foreground SOS alerts
+  /// and foreground admin/president alerts both get displayed the same
+  /// way background ones do.
+  Future<void> _showAnyNotification(RemoteMessage message) async {
+    switch (message.data['type']) {
+      case 'sos_alert':
+        await _showSosNotification(message);
+        break;
+      case 'admin_alert':
+        await _showAdminAlertNotification(message);
+        break;
+    }
+  }
+
+  /// A president/state-coordinator broadcast alert (state-wide or targeted
+  /// at the recipient's district). Uses its own channel - high priority,
+  /// but not the full-screen/ongoing SOS treatment, since this isn't a
+  /// personal emergency, it's an official advisory.
+  Future<void> _showAdminAlertNotification(RemoteMessage message) async {
+    final title = (message.data['title'] ?? 'Official Alert').toString();
+    final body = (message.data['body'] ?? '').toString();
+    final severity = (message.data['severity'] ?? 'orange').toString();
+    final payload = jsonEncode(message.data);
+
+    final importance = (severity == 'dark_red' || severity == 'light_red') ? Importance.max : Importance.high;
+
+    final androidDetails = AndroidNotificationDetails(
+      'admin_alerts',
+      'Official State Alerts',
+      channelDescription: 'Alerts issued by the President / State Coordinator',
+      importance: importance,
+      priority: importance == Importance.max ? Priority.max : Priority.high,
+      playSound: true,
+      visibility: NotificationVisibility.public,
+    );
+
+    await _local.show(
+      message.data['notification_id']?.hashCode ?? title.hashCode,
+      title,
+      body,
+      NotificationDetails(android: androidDetails),
+      payload: payload,
+    );
+  }
+
   void _handlePayload(String? payload) {
     if (payload == null) return;
     try {
@@ -129,12 +179,18 @@ class PushNotificationService {
   }
 
   void _handleDataPayload(Map<String, dynamic> data) {
-    if (data['type'] != 'sos_alert') return;
-    final sosId = int.tryParse('${data['sos_id']}');
-    final lat = double.tryParse('${data['latitude']}');
-    final lon = double.tryParse('${data['longitude']}');
-    if (sosId == null || lat == null || lon == null) return;
-
-    onSosNotificationTapped?.call(sosId, data['sender_name']?.toString() ?? 'Someone', lat, lon);
+    switch (data['type']) {
+      case 'sos_alert':
+        final sosId = int.tryParse('${data['sos_id']}');
+        final lat = double.tryParse('${data['latitude']}');
+        final lon = double.tryParse('${data['longitude']}');
+        if (sosId == null || lat == null || lon == null) return;
+        onSosNotificationTapped?.call(sosId, data['sender_name']?.toString() ?? 'Someone', lat, lon);
+        break;
+      case 'admin_alert':
+        final notificationId = int.tryParse('${data['notification_id']}') ?? 0;
+        onAdminAlertTapped?.call(notificationId, (data['title'] ?? 'Official Alert').toString());
+        break;
+    }
   }
 }

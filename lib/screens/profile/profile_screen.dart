@@ -7,6 +7,9 @@ import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../auth/welcome_screen.dart';
+import '../notifications/notification_inbox_screen.dart';
+import '../president/notification_center_screen.dart';
+import '../president/president_dashboard_screen.dart';
 import 'backup_screen.dart';
 import '../profile/safety_contacts_screen.dart';
 
@@ -129,6 +132,36 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          if (isPresident) ...[
+            _ActionTile(
+              icon: Icons.dashboard_customize_outlined,
+              title: 'State Command Dashboard',
+              subtitle: 'District-wise citizens, active SOS and live alerts',
+              onTap: () => Navigator.of(context).push(
+                fadeScaleRoute(const PresidentDashboardScreen()),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ActionTile(
+              icon: Icons.campaign_outlined,
+              title: 'Notification Center',
+              subtitle: 'Send, edit or withdraw alerts to a district or all Kerala',
+              onTap: () => Navigator.of(context).push(
+                fadeScaleRoute(const NotificationCenterScreen()),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ] else ...[
+            _ActionTile(
+              icon: Icons.notifications_outlined,
+              title: 'Alerts',
+              subtitle: 'Official alerts for your district and statewide notices',
+              onTap: () => Navigator.of(context).push(
+                fadeScaleRoute(const NotificationInboxScreen()),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           _ActionTile(
             icon: Icons.shield_outlined,
             title: 'Safety Circle',
