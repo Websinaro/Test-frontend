@@ -49,4 +49,25 @@ class LocationService {
       ),
     );
   }
+
+  /// Continuous stream of the device's position, used for the rescuer's
+  /// live "blue dot" on the SOS map. Tighter accuracy and a small distance
+  /// filter (5m) than getCurrentPosition() - this drives a live-updating
+  /// route/distance so it needs to react promptly as the rescuer moves.
+  /// Assumes permission has already been granted (call getCurrentPosition()
+  /// or checkPermission()/requestPermission() first).
+  Stream<Position> watchPosition() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    );
+  }
+
+  /// Straight-line distance in meters between two coordinates. Used as an
+  /// instant fallback whenever the road-routing API is unavailable.
+  double distanceBetween(double startLat, double startLon, double endLat, double endLon) {
+    return Geolocator.distanceBetween(startLat, startLon, endLat, endLon);
+  }
 }
