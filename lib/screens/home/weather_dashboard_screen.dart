@@ -9,6 +9,7 @@ import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
 import '../../widgets/district_alert_card.dart';
 import '../../widgets/error_retry_view.dart';
+import '../guide/emergency_guide_screen.dart';
 import '../notifications/notification_inbox_screen.dart';
 import 'weather_detail_screen.dart';
 import 'weather_detail_view.dart';
@@ -52,6 +53,11 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
       appBar: AppBar(
         title: Text(isPresident ? 'State Command Center' : 'WeBAlert'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book_rounded),
+            tooltip: 'Emergency Guide',
+            onPressed: () => Navigator.of(context).push(fadeScaleRoute(const EmergencyGuideScreen())),
+          ),
           if (isPresident)
             const Padding(
               padding: EdgeInsets.only(right: 16),

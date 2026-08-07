@@ -11,6 +11,7 @@ import '../notifications/notification_inbox_screen.dart';
 import '../president/notification_center_screen.dart';
 import '../president/president_dashboard_screen.dart';
 import 'backup_screen.dart';
+import '../guide/emergency_guide_screen.dart';
 import '../profile/safety_contacts_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -168,6 +169,15 @@ class ProfileScreen extends StatelessWidget {
             subtitle: 'People notified with your live location during an SOS',
             onTap: () => Navigator.of(context).push(
               fadeScaleRoute(const SafetyContactsScreen()),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _ActionTile(
+            icon: Icons.menu_book_rounded,
+            title: 'Emergency Guide',
+            subtitle: 'What to do before, during and after each disaster',
+            onTap: () => Navigator.of(context).push(
+              fadeScaleRoute(const EmergencyGuideScreen()),
             ),
           ),
           const SizedBox(height: 10),
