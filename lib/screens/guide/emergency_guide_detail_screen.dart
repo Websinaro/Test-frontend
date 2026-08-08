@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/emergency_guide.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 
 /// Full survival guide for a single disaster type: quick-reference survival
 /// facts, then tabbed Before / During / After checklists, and a highlighted
-/// "Never do this" list.
+/// "Never do this" list. Renders in English or Malayalam depending on the
+/// app's current [LanguageProvider] setting - switching is instant since
+/// both languages are already bundled in [DisasterGuide].
 class EmergencyGuideDetailScreen extends StatefulWidget {
   final String guideId;
   const EmergencyGuideDetailScreen({super.key, required this.guideId});
@@ -33,10 +38,12 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
   @override
   Widget build(BuildContext context) {
     final guide = EmergencyGuideData.byId(widget.guideId);
+    final lang = context.watch<LanguageProvider>().language;
+    final ml = lang.code == 'ml';
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(guide.name)),
+      appBar: AppBar(title: Text(guide.nameFor(ml))),
       body: Column(
         children: [
           Padding(
@@ -54,7 +61,7 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    guide.shortDescription,
+                    guide.descriptionFor(ml),
                     style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
                   ),
                 ),
@@ -65,7 +72,7 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: [
-                _SurvivalFactsGrid(facts: guide.survivalData, color: guide.color),
+                _SurvivalFactsGrid(facts: guide.survivalData, color: guide.color, malayalam: ml),
                 const SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
@@ -84,10 +91,10 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
                     unselectedLabelColor: AppColors.textSecondary,
                     labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
                     dividerColor: Colors.transparent,
-                    tabs: const [
-                      Tab(text: 'BEFORE'),
-                      Tab(text: 'DURING'),
-                      Tab(text: 'AFTER'),
+                    tabs: [
+                      Tab(text: AppStrings.t('tab_before', lang)),
+                      Tab(text: AppStrings.t('tab_during', lang)),
+                      Tab(text: AppStrings.t('tab_after', lang)),
                     ],
                   ),
                 ),
@@ -96,18 +103,18 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
                   // Sized rather than fully dynamic - keeps the tab content
                   // from jumping in height as the user switches tabs, since
                   // this is inside a ListView (not an IndexedStack).
-                  height: _tallestTabHeight(guide),
+                  height: _tallestTabHeight(guide, ml),
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _ChecklistCard(items: guide.before, color: guide.color, icon: Icons.checklist_rounded),
-                      _ChecklistCard(items: guide.during, color: guide.color, icon: Icons.flash_on_rounded),
-                      _ChecklistCard(items: guide.after, color: guide.color, icon: Icons.task_alt_rounded),
+                      _ChecklistCard(items: guide.beforeFor(ml), color: guide.color, icon: Icons.checklist_rounded),
+                      _ChecklistCard(items: guide.duringFor(ml), color: guide.color, icon: Icons.flash_on_rounded),
+                      _ChecklistCard(items: guide.afterFor(ml), color: guide.color, icon: Icons.task_alt_rounded),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
-                _DontDoCard(items: guide.dontDo),
+                _DontDoCard(items: guide.dontDoFor(ml), title: AppStrings.t('never_do_this', lang)),
               ],
             ),
           ),
@@ -117,20 +124,22 @@ class _EmergencyGuideDetailScreenState extends State<EmergencyGuideDetailScreen>
   }
 
   // Rough heuristic so the tallest of the three lists fits without the
-  // TabBarView clipping content; ~34px per line-wrapped bullet is a safe
-  // approximation for this font size/width across devices.
-  double _tallestTabHeight(DisasterGuide guide) {
-    final longest = [guide.before, guide.during, guide.after]
+  // TabBarView clipping content; Malayalam script tends to wrap to a couple
+  // more lines than English at the same width, so it gets a taller estimate.
+  double _tallestTabHeight(DisasterGuide guide, bool malayalam) {
+    final longest = [guide.beforeFor(malayalam), guide.duringFor(malayalam), guide.afterFor(malayalam)]
         .map((list) => list.length)
         .reduce((a, b) => a > b ? a : b);
-    return (longest * 66.0) + 40;
+    final perItem = malayalam ? 84.0 : 66.0;
+    return (longest * perItem) + 40;
   }
 }
 
 class _SurvivalFactsGrid extends StatelessWidget {
   final List<GuideFact> facts;
   final Color color;
-  const _SurvivalFactsGrid({required this.facts, required this.color});
+  final bool malayalam;
+  const _SurvivalFactsGrid({required this.facts, required this.color, required this.malayalam});
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +151,7 @@ class _SurvivalFactsGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 1.55,
+        childAspectRatio: 1.4,
       ),
       itemBuilder: (context, index) {
         final fact = facts[index];
@@ -159,14 +168,14 @@ class _SurvivalFactsGrid extends StatelessWidget {
               Icon(fact.icon, color: color, size: 18),
               const Spacer(),
               Text(
-                fact.value,
+                fact.valueFor(malayalam),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, height: 1.2),
               ),
               const SizedBox(height: 2),
               Text(
-                fact.label,
+                fact.labelFor(malayalam),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary),
@@ -220,7 +229,8 @@ class _ChecklistCard extends StatelessWidget {
 
 class _DontDoCard extends StatelessWidget {
   final List<String> items;
-  const _DontDoCard({required this.items});
+  final String title;
+  const _DontDoCard({required this.items, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -234,13 +244,13 @@ class _DontDoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.report_gmailerrorred_rounded, color: AppColors.alertLightRed, size: 18),
-              SizedBox(width: 8),
+              const Icon(Icons.report_gmailerrorred_rounded, color: AppColors.alertLightRed, size: 18),
+              const SizedBox(width: 8),
               Text(
-                'Never do this',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.alertLightRed),
+                title,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.alertLightRed),
               ),
             ],
           ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/emergency_guide.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import 'emergency_guide_detail_screen.dart';
@@ -10,15 +13,19 @@ import 'emergency_guide_detail_screen.dart';
 ///
 /// Deliberately built from bundled static data (see [EmergencyGuideData])
 /// rather than an API call, so it stays fully usable with no network -
-/// exactly when it's most likely to be needed.
+/// exactly when it's most likely to be needed. Content and chrome text
+/// both switch instantly between English and Malayalam via [LanguageProvider].
 class EmergencyGuideScreen extends StatelessWidget {
   const EmergencyGuideScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
+    final ml = lang.code == 'ml';
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Emergency Guide')),
+      appBar: AppBar(title: Text(AppStrings.t('emergency_guide', lang))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
@@ -29,23 +36,23 @@ class EmergencyGuideScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.cardBorder),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.offline_bolt_rounded, color: AppColors.primary, size: 22),
-                SizedBox(width: 12),
+                const Icon(Icons.offline_bolt_rounded, color: AppColors.primary, size: 22),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Works offline. Tap a disaster to see what to do before, during and after it happens.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
+                    AppStrings.t('emergency_guide_offline_note', lang),
+                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
-          const Text(
-            'Select a disaster type',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          Text(
+            AppStrings.t('select_disaster_type', lang),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -62,6 +69,7 @@ class EmergencyGuideScreen extends StatelessWidget {
               final guide = EmergencyGuideData.guides[index];
               return _DisasterCard(
                 guide: guide,
+                malayalam: ml,
                 onTap: () => Navigator.of(context).push(
                   fadeScaleRoute(EmergencyGuideDetailScreen(guideId: guide.id)),
                 ),
@@ -76,8 +84,9 @@ class EmergencyGuideScreen extends StatelessWidget {
 
 class _DisasterCard extends StatelessWidget {
   final DisasterGuide guide;
+  final bool malayalam;
   final VoidCallback onTap;
-  const _DisasterCard({required this.guide, required this.onTap});
+  const _DisasterCard({required this.guide, required this.malayalam, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -104,13 +113,13 @@ class _DisasterCard extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              guide.name,
+              guide.nameFor(malayalam),
               style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 5),
             Expanded(
               child: Text(
-                guide.shortDescription,
+                guide.descriptionFor(malayalam),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),

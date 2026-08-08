@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/sos_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -26,6 +28,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         if (auth.status == AuthStatus.unauthenticated) {
@@ -67,19 +70,19 @@ class _HomeShellState extends State<HomeShell> {
                       color: AppColors.alertDarkRed,
                       child: InkWell(
                         onTap: () => showSosFlow(context),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           child: Row(
                             children: [
-                              Icon(Icons.sensors_rounded, color: Colors.white, size: 18),
-                              SizedBox(width: 8),
+                              const Icon(Icons.sensors_rounded, color: Colors.white, size: 18),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'SOS ACTIVE - your Safety Circle can see your live location',
-                                  style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                                  AppStrings.t('sos_active_banner', lang),
+                                  style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
                                 ),
                               ),
-                              Icon(Icons.chevron_right_rounded, color: Colors.white, size: 18),
+                              const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 18),
                             ],
                           ),
                         ),
@@ -106,7 +109,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: _NavItem(
                       icon: Icons.cloud_outlined,
                       activeIcon: Icons.cloud_rounded,
-                      label: isPresident ? 'Command' : 'Weather',
+                      label: isPresident ? AppStrings.t('nav_command', lang) : AppStrings.t('nav_weather', lang),
                       isSelected: _index == 0,
                       color: isPresident ? AppColors.presidentGold : AppColors.primary,
                       onTap: () => setState(() => _index = 0),
@@ -116,7 +119,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: _NavItem(
                       icon: Icons.map_outlined,
                       activeIcon: Icons.map_rounded,
-                      label: 'Districts',
+                      label: AppStrings.t('nav_districts', lang),
                       isSelected: _index == 1,
                       color: isPresident ? AppColors.presidentGold : AppColors.primary,
                       onTap: () => setState(() => _index = 1),
@@ -127,7 +130,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: _NavItem(
                       icon: Icons.public_outlined,
                       activeIcon: Icons.public_rounded,
-                      label: 'Map',
+                      label: AppStrings.t('nav_map', lang),
                       isSelected: _index == 2,
                       color: isPresident ? AppColors.presidentGold : AppColors.primary,
                       onTap: () => setState(() => _index = 2),
@@ -137,7 +140,7 @@ class _HomeShellState extends State<HomeShell> {
                     child: _NavItem(
                       icon: Icons.person_outline_rounded,
                       activeIcon: Icons.person_rounded,
-                      label: 'Profile',
+                      label: AppStrings.t('nav_profile', lang),
                       isSelected: _index == 3,
                       color: isPresident ? AppColors.presidentGold : AppColors.primary,
                       onTap: () => setState(() => _index = 3),

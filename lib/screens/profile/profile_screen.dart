@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/safety_provider.dart';
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../utils/districts.dart';
@@ -48,11 +51,71 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showLanguagePicker(BuildContext context, AppLanguage current) async {
+    final provider = context.read<LanguageProvider>();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.t('choose_language', current),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 16),
+                for (final option in AppLanguage.values) ...[
+                  InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      provider.setLanguage(option);
+                      Navigator.of(ctx).pop();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: option == current ? AppColors.primary.withValues(alpha: 0.12) : AppColors.card,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: option == current ? AppColors.primary : AppColors.cardBorder,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option.nativeLabel,
+                              style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          if (option == current)
+                            const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // ...rest of the file unchanged
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>().language;
     final user = auth.currentUser;
     final isPresident = user?.isPresident ?? false;
 
@@ -174,11 +237,18 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _ActionTile(
             icon: Icons.menu_book_rounded,
-            title: 'Emergency Guide',
-            subtitle: 'What to do before, during and after each disaster',
+            title: AppStrings.t('emergency_guide', lang),
+            subtitle: AppStrings.t('emergency_guide_subtitle', lang),
             onTap: () => Navigator.of(context).push(
               fadeScaleRoute(const EmergencyGuideScreen()),
             ),
+          ),
+          const SizedBox(height: 10),
+          _ActionTile(
+            icon: Icons.translate_rounded,
+            title: AppStrings.t('language', lang),
+            subtitle: '${lang.nativeLabel} · ${AppStrings.t('language_tile_subtitle', lang)}',
+            onTap: () => _showLanguagePicker(context, lang),
           ),
           const SizedBox(height: 10),
           _ActionTile(

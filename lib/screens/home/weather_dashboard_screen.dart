@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/weather_models.dart';
+import '../../localization/app_strings.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/weather_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -46,6 +48,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>().language;
     final isPresident = auth.currentUser?.isPresident ?? false;
 
     return Scaffold(
@@ -55,7 +58,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.menu_book_rounded),
-            tooltip: 'Emergency Guide',
+            tooltip: AppStrings.t('emergency_guide', lang),
             onPressed: () => Navigator.of(context).push(fadeScaleRoute(const EmergencyGuideScreen())),
           ),
           if (isPresident)

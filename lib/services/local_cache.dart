@@ -21,6 +21,7 @@ class LocalCache {
   static const _kRememberedEmail = 'cache_remembered_email';
   static const _kOnboardingDone = 'cache_onboarding_done';
   static const _kLastLocationKey = 'cache_last_location_key';
+  static const _kLanguageCode = 'cache_language_code';
 
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
 
@@ -115,6 +116,20 @@ class LocalCache {
   Future<String?> getLastLocationKey() async {
     final prefs = await _prefs;
     return prefs.getString(_kLastLocationKey);
+  }
+
+  // --- Language preference -------------------------------------------------
+  // Stored on-device only - the chosen language is applied instantly from
+  // bundled translations, with no network round-trip either way.
+
+  Future<void> setLanguageCode(String code) async {
+    final prefs = await _prefs;
+    await prefs.setString(_kLanguageCode, code);
+  }
+
+  Future<String?> getLanguageCode() async {
+    final prefs = await _prefs;
+    return prefs.getString(_kLanguageCode);
   }
 
   /// Dumps everything cached locally into a single JSON-serializable map -

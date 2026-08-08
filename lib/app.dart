@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
+import 'providers/language_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/safety_provider.dart';
 import 'providers/sos_provider.dart';
@@ -65,17 +67,33 @@ class _WeBAlertAppState extends State<WeBAlertApp> {
         ChangeNotifierProvider.value(value: _authProvider),
         ChangeNotifierProvider.value(value: _safetyProvider),
         ChangeNotifierProvider.value(value: _notificationProvider),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProvider(create: (_) => SosProvider()),
       ],
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        title: 'WeBAlert',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark,
-        home: const SplashScreen(),
+      child: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, _) {
+          return MaterialApp(
+            navigatorKey: navigatorKey,
+            title: 'WeBAlert',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.dark,
+            darkTheme: AppTheme.dark,
+            themeMode: ThemeMode.dark,
+            // Bundled, offline translations - the locale switch is instant
+            // and never depends on connectivity. Material's own built-in
+            // strings (date pickers, "Cancel"/"OK" etc.) switch along with
+            // it via the delegates below.
+            locale: languageProvider.language.locale,
+            supportedLocales: const [Locale('en'), Locale('ml')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }
