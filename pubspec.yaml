@@ -53,7 +53,7 @@ dependencies:
   connectivity_plus: ^6.1.0
 
   # Date / time formatting for forecasts
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # AES-GCM encryption/decryption of API payloads
   cryptography: ^2.7.0
