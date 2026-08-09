@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
 import '../models/weather_models.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 import 'weather_icon.dart';
 
@@ -28,6 +31,7 @@ class DailyForecastList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final count = daily.length;
     if (count == 0) return const SizedBox.shrink();
 
@@ -38,7 +42,7 @@ class DailyForecastList extends StatelessWidget {
     return Column(
       children: List.generate(count, (i) {
         final date = DateTime.tryParse(daily.date[i]);
-        final label = i == 0 ? 'Today' : (date != null ? DateFormat('EEE').format(date) : '--');
+        final label = i == 0 ? AppStrings.t('today', lang) : (date != null ? DateFormat('EEE').format(date) : '--');
         final iconData = weatherIconFor(_codeToIcon(daily.weatherCode[i]));
         final rain = daily.rainProbabilityMax.length > i ? daily.rainProbabilityMax[i] : null;
 

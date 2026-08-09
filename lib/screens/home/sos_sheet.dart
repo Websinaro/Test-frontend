@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/safety_provider.dart';
 import '../../providers/sos_provider.dart';
 import '../../theme/app_colors.dart';
@@ -29,6 +31,7 @@ Future<void> showSosFlow(BuildContext context) async {
 }
 
 Future<void> _showNoContactsSheet(BuildContext context) {
+  final lang = context.read<LanguageProvider>().language;
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.surfaceElevated,
@@ -40,14 +43,14 @@ Future<void> _showNoContactsSheet(BuildContext context) {
         children: [
           const Icon(Icons.shield_outlined, color: AppColors.textMuted, size: 44),
           const SizedBox(height: 16),
-          const Text(
-            'Add a Safety Contact First',
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+          Text(
+            AppStrings.t('add_safety_contact_first_title', lang),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'SOS needs at least one trusted contact to alert with your location.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          Text(
+            AppStrings.t('add_safety_contact_first_body', lang),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -59,7 +62,7 @@ Future<void> _showNoContactsSheet(BuildContext context) {
                 Navigator.of(context).push(fadeScaleRoute(const SafetyContactsScreen()));
               },
               style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 14)),
-              child: const Text('Add Safety Contact'),
+              child: Text(AppStrings.t('add_safety_contact_btn', lang)),
             ),
           ),
         ],
@@ -69,6 +72,7 @@ Future<void> _showNoContactsSheet(BuildContext context) {
 }
 
 Future<void> _showConfirmSheet(BuildContext context) {
+  final lang = context.read<LanguageProvider>().language;
   return showModalBottomSheet(
     context: context,
     isDismissible: true,
@@ -83,14 +87,14 @@ Future<void> _showConfirmSheet(BuildContext context) {
             children: [
               const Icon(Icons.warning_amber_rounded, color: AppColors.alertDarkRed, size: 44),
               const SizedBox(height: 16),
-              const Text(
-                'Send Emergency SOS?',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+              Text(
+                AppStrings.t('send_emergency_sos_title', lang),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Your safety contacts will be alerted immediately with your live location.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              Text(
+                AppStrings.t('send_emergency_sos_body', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               if (sos.errorMessage != null) ...[
@@ -113,13 +117,13 @@ Future<void> _showConfirmSheet(BuildContext context) {
                   ),
                   child: sos.status == SosStatus.sending
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('SEND SOS', style: TextStyle(fontWeight: FontWeight.w800)),
+                      : Text(AppStrings.t('send_sos_btn', lang), style: const TextStyle(fontWeight: FontWeight.w800)),
                 ),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(AppStrings.t('cancel', lang), style: const TextStyle(color: AppColors.textSecondary)),
               ),
             ],
           );
@@ -130,6 +134,7 @@ Future<void> _showConfirmSheet(BuildContext context) {
 }
 
 Future<void> _showActiveSheet(BuildContext context) {
+  final lang = context.read<LanguageProvider>().language;
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.surfaceElevated,
@@ -143,14 +148,14 @@ Future<void> _showActiveSheet(BuildContext context) {
             children: [
               const Icon(Icons.sensors_rounded, color: AppColors.alertDarkRed, size: 44),
               const SizedBox(height: 16),
-              const Text(
-                'SOS Is Active',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+              Text(
+                AppStrings.t('sos_active_title', lang),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Your safety contacts can see your live location. Only mark yourself safe once the emergency has passed.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              Text(
+                AppStrings.t('sos_active_body', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -165,13 +170,13 @@ Future<void> _showActiveSheet(BuildContext context) {
                     side: const BorderSide(color: AppColors.alertGreen),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text("I'm Safe Now", style: TextStyle(color: AppColors.alertGreen, fontWeight: FontWeight.w700)),
+                  child: Text(AppStrings.t('im_safe_now_btn', lang), style: const TextStyle(color: AppColors.alertGreen, fontWeight: FontWeight.w700)),
                 ),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Close', style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(AppStrings.t('close', lang), style: const TextStyle(color: AppColors.textSecondary)),
               ),
             ],
           );

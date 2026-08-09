@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../models/notification_item.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
@@ -42,17 +45,18 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   }
 
   Future<void> _confirmDelete(NotificationItem n) async {
+    final lang = context.read<LanguageProvider>().language;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete alert?'),
-        content: Text('"${n.title}" will be permanently removed.'),
+        title: Text(AppStrings.t('delete_alert_title', lang)),
+        content: Text('"${n.title}" ${AppStrings.t('delete_alert_body_suffix', lang)}'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.t('cancel', lang))),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.alertRed)),
+            child: Text(AppStrings.t('delete', lang), style: const TextStyle(color: AppColors.alertRed)),
           ),
         ],
       ),
@@ -79,27 +83,28 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NotificationProvider>();
+    final lang = context.watch<LanguageProvider>().language;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Notification Center')),
+      appBar: AppBar(title: Text(AppStrings.t('notification_center_title', lang))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         backgroundColor: AppColors.presidentGold,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.campaign_rounded),
-        label: const Text('New Alert', style: TextStyle(fontWeight: FontWeight.w700)),
+        label: Text(AppStrings.t('new_alert_btn', lang), style: const TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: RefreshIndicator(
         color: AppColors.presidentGold,
         backgroundColor: AppColors.surfaceElevated,
         onRefresh: () => context.read<NotificationProvider>().refresh(),
-        child: _buildBody(context, provider),
+        child: _buildBody(context, provider, lang),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, NotificationProvider provider) {
+  Widget _buildBody(BuildContext context, NotificationProvider provider, AppLanguage lang) {
     if (provider.state == NotificationLoadState.loading && provider.notifications.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.presidentGold));
     }
@@ -107,7 +112,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     if (provider.state == NotificationLoadState.error && provider.notifications.isEmpty) {
       return ErrorRetryView(
         icon: Icons.notifications_off_outlined,
-        message: provider.errorMessage ?? 'Could not load alerts.',
+        message: provider.errorMessage ?? AppStrings.t('alerts_load_error', lang),
         onRetry: () => provider.refresh(),
       );
     }
@@ -115,21 +120,21 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     if (provider.notifications.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 100),
-          Icon(Icons.campaign_outlined, size: 56, color: AppColors.textMuted),
-          SizedBox(height: 14),
+        children: [
+          const SizedBox(height: 100),
+          const Icon(Icons.campaign_outlined, size: 56, color: AppColors.textMuted),
+          const SizedBox(height: 14),
           Center(
             child: Text(
-              "You haven't sent any alerts yet",
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+              AppStrings.t('no_alerts_sent', lang),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Center(
             child: Text(
-              'Tap "New Alert" to notify a district or all of Kerala',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+              AppStrings.t('tap_new_alert_hint', lang),
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5),
             ),
           ),
         ],
@@ -172,7 +177,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                     Icon(n.isStatewide ? Icons.public_rounded : Icons.map_outlined, size: 14, color: AppColors.textMuted),
                     const SizedBox(width: 5),
                     Text(
-                      n.isStatewide ? 'All Kerala' : districtLabel(n.district!),
+                      n.isStatewide ? AppStrings.t('all_kerala', lang) : districtLabel(n.district!, lang),
                       style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
@@ -192,7 +197,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      n.active ? 'Active' : 'Inactive',
+                      n.active ? AppStrings.t('status_active', lang) : AppStrings.t('status_inactive', lang),
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
@@ -208,21 +213,21 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                       child: TextButton.icon(
                         onPressed: () => _openForm(existing: n),
                         icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('Edit'),
+                        label: Text(AppStrings.t('edit', lang)),
                       ),
                     ),
                     Expanded(
                       child: TextButton.icon(
                         onPressed: () => _toggleActive(n),
                         icon: Icon(n.active ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 16),
-                        label: Text(n.active ? 'Deactivate' : 'Reactivate'),
+                        label: Text(n.active ? AppStrings.t('deactivate_btn', lang) : AppStrings.t('reactivate_btn', lang)),
                       ),
                     ),
                     Expanded(
                       child: TextButton.icon(
                         onPressed: () => _confirmDelete(n),
                         icon: const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.alertRed),
-                        label: const Text('Delete', style: TextStyle(color: AppColors.alertRed)),
+                        label: Text(AppStrings.t('delete', lang), style: const TextStyle(color: AppColors.alertRed)),
                       ),
                     ),
                   ],

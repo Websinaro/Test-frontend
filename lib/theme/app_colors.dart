@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/app_language.dart';
+
 /// Central color palette for WeBAlert.
 ///
 /// The whole app uses a single dark / AMOLED theme (true black background)
@@ -52,20 +54,24 @@ class AppColors {
     }
   }
 
-  static String alertLabel(String level) {
+  /// [lang] is optional so existing call sites keep compiling; pass the
+  /// current [AppLanguage] wherever it's available so the label switches
+  /// between English and Malayalam along with the rest of the screen.
+  static String alertLabel(String level, [AppLanguage? lang]) {
+    final ml = lang?.code == 'ml';
     switch (level.toLowerCase()) {
       case 'dark_red':
-        return 'Very High Risk';
+        return ml ? 'വളരെ ഉയർന്ന അപകടസാധ്യത' : 'Very High Risk';
       case 'light_red':
       case 'red':
-        return 'High Risk';
+        return ml ? 'ഉയർന്ന അപകടസാധ്യത' : 'High Risk';
       case 'orange':
-        return 'Risk';
+        return ml ? 'അപകടസാധ്യത' : 'Risk';
       case 'yellow':
-        return 'Low Risk';
+        return ml ? 'കുറഞ്ഞ അപകടസാധ്യത' : 'Low Risk';
       case 'green':
       default:
-        return 'Safe';
+        return ml ? 'സുരക്ഷിതം' : 'Safe';
     }
   }
   

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../models/weather_models.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/weather_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/districts.dart';
@@ -37,16 +41,17 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final label = districtLabel(widget.districtKey);
+    final lang = context.watch<LanguageProvider>().language;
+    final label = districtLabel(widget.districtKey, lang);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(label)),
-      body: _buildBody(),
+      body: _buildBody(lang),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLanguage lang) {
     final weather = _provider.weather;
 
     if (_provider.state == WeatherLoadState.loading && weather == null) {
@@ -55,7 +60,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
 
     if (_provider.state == WeatherLoadState.error && weather == null) {
       return ErrorRetryView(
-        message: _provider.errorMessage ?? 'Could not load weather.',
+        message: _provider.errorMessage ?? AppStrings.t('weather_load_error_generic', lang),
         onRetry: () => _provider.loadForDistrict(widget.districtKey),
       );
     }
@@ -63,7 +68,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
     final WeatherResponse w = weather!;
     return WeatherDetailView(
       weather: w,
-      locationLabel: w.locationName ?? districtLabel(widget.districtKey),
+      locationLabel: w.locationName ?? districtLabel(widget.districtKey, lang),
       usingCache: _provider.usingCache,
       onRefresh: () => _provider.loadForDistrict(widget.districtKey),
     );

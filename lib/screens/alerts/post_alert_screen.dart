@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../providers/alerts_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/districts.dart';
@@ -60,9 +62,10 @@ class _PostAlertScreenState extends State<PostAlertScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Post Official Alert')),
+      appBar: AppBar(title: Text(AppStrings.t('post_official_alert_title', lang))),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -80,21 +83,21 @@ class _PostAlertScreenState extends State<PostAlertScreen> {
               ),
             AppTextField(
               controller: _title,
-              label: 'Alert Title',
+              label: AppStrings.t('alert_title_label', lang),
               prefixIcon: Icons.title_rounded,
               textCapitalization: TextCapitalization.sentences,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.t('enter_title_error', lang) : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _message,
               maxLines: 4,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Message'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a message' : null,
+              decoration: InputDecoration(labelText: AppStrings.t('message_label', lang)),
+              validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.t('enter_message_error', lang) : null,
             ),
             const SizedBox(height: 20),
-            const Text('Severity', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(AppStrings.t('severity_label', lang), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -102,7 +105,7 @@ class _PostAlertScreenState extends State<PostAlertScreen> {
                 final selected = _severity == s;
                 final color = AppColors.alertColor(s);
                 return ChoiceChip(
-                  label: Text(AppColors.alertLabel(s)),
+                  label: Text(AppColors.alertLabel(s, lang)),
                   selected: selected,
                   onSelected: (_) => setState(() => _severity = s),
                   selectedColor: color.withValues(alpha: 0.25),
@@ -113,28 +116,28 @@ class _PostAlertScreenState extends State<PostAlertScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Target', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(AppStrings.t('target_label', lang), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String?>(
               initialValue: _district,
-              decoration: const InputDecoration(labelText: 'District (or state-wide)'),
+              decoration: InputDecoration(labelText: AppStrings.t('district_or_statewide_label', lang)),
               items: [
-                const DropdownMenuItem(value: null, child: Text('State-wide (all districts)')),
-                ...kKeralaDistricts.map((d) => DropdownMenuItem(value: d.label, child: Text(d.label))),
+                DropdownMenuItem(value: null, child: Text(AppStrings.t('statewide_all_districts', lang))),
+                ...kKeralaDistricts.map((d) => DropdownMenuItem(value: d.label, child: Text(lang.code == 'ml' ? d.labelMl : d.label))),
               ],
               onChanged: (v) => setState(() => _district = v),
             ),
             const SizedBox(height: 20),
-            const Text('Expires In', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(AppStrings.t('expires_in_label', lang), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               initialValue: _expiresInHours,
-              decoration: const InputDecoration(labelText: 'Auto-expire'),
-              items: const [
-                DropdownMenuItem(value: 6, child: Text('6 hours')),
-                DropdownMenuItem(value: 24, child: Text('24 hours')),
-                DropdownMenuItem(value: 72, child: Text('3 days')),
-                DropdownMenuItem(value: 168, child: Text('7 days')),
+              decoration: InputDecoration(labelText: AppStrings.t('auto_expire_label', lang)),
+              items: [
+                DropdownMenuItem(value: 6, child: Text(AppStrings.t('hours_6', lang))),
+                DropdownMenuItem(value: 24, child: Text(AppStrings.t('hours_24', lang))),
+                DropdownMenuItem(value: 72, child: Text(AppStrings.t('days_3', lang))),
+                DropdownMenuItem(value: 168, child: Text(AppStrings.t('days_7', lang))),
               ],
               onChanged: (v) => setState(() => _expiresInHours = v ?? 24),
             ),
@@ -146,7 +149,7 @@ class _PostAlertScreenState extends State<PostAlertScreen> {
                 icon: _saving
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.campaign_rounded),
-                label: Text(_saving ? 'Posting...' : 'Broadcast Alert'),
+                label: Text(_saving ? AppStrings.t('posting_ellipsis', lang) : AppStrings.t('broadcast_alert_btn', lang)),
                 style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 14)),
               ),
             ),

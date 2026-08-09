@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/safety_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -34,6 +36,7 @@ class SafetySetupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -52,16 +55,15 @@ class SafetySetupScreen extends StatelessWidget {
                 child: const Icon(Icons.shield_rounded, color: AppColors.primary, size: 40),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Set Up Your Safety Circle',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
+              Text(
+                AppStrings.t('setup_safety_circle_title', lang),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Add at least one trusted contact. If you ever press SOS, '
-                'they\'ll get an alert with your live location right away.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
+              Text(
+                AppStrings.t('setup_safety_circle_body', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -70,7 +72,7 @@ class SafetySetupScreen extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => _addContact(context),
                   icon: const Icon(Icons.person_add_alt_1_rounded),
-                  label: const Text('Add Safety Contact'),
+                  label: Text(AppStrings.t('add_safety_contact_btn', lang)),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -80,13 +82,12 @@ class SafetySetupScreen extends StatelessWidget {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => _skip(context),
-                child: const Text('Skip for now', style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(AppStrings.t('skip_for_now', lang), style: const TextStyle(color: AppColors.textSecondary)),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'You can add this anytime from Profile → Safety Circle. '
-                'SOS won\'t be able to alert anyone until you do.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+              Text(
+                AppStrings.t('safety_setup_note', lang),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5),
                 textAlign: TextAlign.center,
               ),
             ],

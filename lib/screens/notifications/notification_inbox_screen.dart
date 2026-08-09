@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/backend_time.dart';
@@ -37,20 +40,21 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NotificationProvider>();
+    final lang = context.watch<LanguageProvider>().language;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Alerts')),
+      appBar: AppBar(title: Text(AppStrings.t('alerts_title', lang))),
       body: RefreshIndicator(
         color: AppColors.primary,
         backgroundColor: AppColors.surfaceElevated,
         onRefresh: () => context.read<NotificationProvider>().refresh(),
-        child: _buildBody(context, provider),
+        child: _buildBody(context, provider, lang),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, NotificationProvider provider) {
+  Widget _buildBody(BuildContext context, NotificationProvider provider, AppLanguage lang) {
     if (provider.state == NotificationLoadState.loading && provider.notifications.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
@@ -58,7 +62,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     if (provider.state == NotificationLoadState.error && provider.notifications.isEmpty) {
       return ErrorRetryView(
         icon: Icons.notifications_off_outlined,
-        message: provider.errorMessage ?? 'Could not load alerts.',
+        message: provider.errorMessage ?? AppStrings.t('alerts_load_error', lang),
         onRetry: () => provider.refresh(),
       );
     }
@@ -66,14 +70,14 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     if (provider.notifications.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 120),
-          Icon(Icons.notifications_none_rounded, size: 56, color: AppColors.textMuted),
-          SizedBox(height: 14),
+        children: [
+          const SizedBox(height: 120),
+          const Icon(Icons.notifications_none_rounded, size: 56, color: AppColors.textMuted),
+          const SizedBox(height: 14),
           Center(
             child: Text(
-              'No official alerts right now',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+              AppStrings.t('no_official_alerts', lang),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
             ),
           ),
         ],
@@ -124,7 +128,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    n.isStatewide ? 'All Kerala' : districtLabel(n.district!),
+                    n.isStatewide ? AppStrings.t('all_kerala', lang) : districtLabel(n.district!, lang),
                     style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),
@@ -136,7 +140,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Issued by ${n.createdByName}',
+                '${AppStrings.t('issued_by_prefix', lang)} ${n.createdByName}',
                 style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
               ),
             ],

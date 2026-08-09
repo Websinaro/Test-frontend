@@ -21,17 +21,18 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _confirmLogout(BuildContext context) async {
+    final lang = context.read<LanguageProvider>().language;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Log out?'),
-        content: const Text('You can log back in anytime with your email and password.'),
+        title: Text(AppStrings.t('log_out_confirm_title', lang)),
+        content: Text(AppStrings.t('log_out_confirm_body', lang)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.t('cancel', lang))),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Log out', style: TextStyle(color: AppColors.alertRed)),
+            child: Text(AppStrings.t('log_out_btn', lang), style: const TextStyle(color: AppColors.alertRed)),
           ),
         ],
       ),
@@ -121,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(AppStrings.t('profile_title', lang))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -133,14 +134,14 @@ class ProfileScreen extends StatelessWidget {
                 color: AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.cloud_off_rounded, size: 16, color: AppColors.textMuted),
-                  SizedBox(width: 8),
+                  const Icon(Icons.cloud_off_rounded, size: 16, color: AppColors.textMuted),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Showing your saved profile - offline.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      AppStrings.t('offline_profile_note', lang),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -175,7 +176,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    isPresident ? 'PRESIDENT / STATE COORDINATOR' : 'CITIZEN',
+                    isPresident ? AppStrings.t('role_president', lang) : AppStrings.t('role_citizen', lang),
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -190,17 +191,17 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 28),
           _InfoCard(
             children: [
-              _InfoRow(icon: Icons.map_outlined, label: 'District', value: user != null ? districtLabel(user.district) : '—'),
+              _InfoRow(icon: Icons.map_outlined, label: AppStrings.t('info_district', lang), value: user != null ? districtLabel(user.district, lang) : '—'),
               const Divider(height: 22),
-              _InfoRow(icon: Icons.badge_outlined, label: 'Role', value: isPresident ? 'President' : 'Citizen'),
+              _InfoRow(icon: Icons.badge_outlined, label: AppStrings.t('info_role', lang), value: isPresident ? AppStrings.t('role_president_short', lang) : AppStrings.t('role_citizen_short', lang)),
             ],
           ),
           const SizedBox(height: 16),
           if (isPresident) ...[
             _ActionTile(
               icon: Icons.dashboard_customize_outlined,
-              title: 'State Command Dashboard',
-              subtitle: 'District-wise citizens, active SOS and live alerts',
+              title: AppStrings.t('tile_command_dashboard_title', lang),
+              subtitle: AppStrings.t('tile_command_dashboard_subtitle', lang),
               onTap: () => Navigator.of(context).push(
                 fadeScaleRoute(const PresidentDashboardScreen()),
               ),
@@ -208,8 +209,8 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 10),
             _ActionTile(
               icon: Icons.campaign_outlined,
-              title: 'Notification Center',
-              subtitle: 'Send, edit or withdraw alerts to a district or all Kerala',
+              title: AppStrings.t('tile_notification_center_title', lang),
+              subtitle: AppStrings.t('tile_notification_center_subtitle', lang),
               onTap: () => Navigator.of(context).push(
                 fadeScaleRoute(const NotificationCenterScreen()),
               ),
@@ -218,8 +219,8 @@ class ProfileScreen extends StatelessWidget {
           ] else ...[
             _ActionTile(
               icon: Icons.notifications_outlined,
-              title: 'Alerts',
-              subtitle: 'Official alerts for your district and statewide notices',
+              title: AppStrings.t('tile_alerts_title', lang),
+              subtitle: AppStrings.t('tile_alerts_subtitle', lang),
               onTap: () => Navigator.of(context).push(
                 fadeScaleRoute(const NotificationInboxScreen()),
               ),
@@ -228,8 +229,8 @@ class ProfileScreen extends StatelessWidget {
           ],
           _ActionTile(
             icon: Icons.shield_outlined,
-            title: 'Safety Circle',
-            subtitle: 'People notified with your live location during an SOS',
+            title: AppStrings.t('tile_safety_circle_title', lang),
+            subtitle: AppStrings.t('tile_safety_circle_subtitle', lang),
             onTap: () => Navigator.of(context).push(
               fadeScaleRoute(const SafetyContactsScreen()),
             ),
@@ -253,8 +254,8 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _ActionTile(
             icon: Icons.save_alt_rounded,
-            title: 'Backup & Restore',
-            subtitle: 'Save your data to device storage, on or off the app',
+            title: AppStrings.t('tile_backup_title', lang),
+            subtitle: AppStrings.t('tile_backup_subtitle', lang),
             onTap: () => Navigator.of(context).push(
               fadeScaleRoute(const BackupScreen()),
             ),
@@ -262,17 +263,15 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
           _ActionTile(
             icon: Icons.info_outline_rounded,
-            title: 'About WeBAlert',
-            subtitle: 'Kerala Disaster Management Authority',
+            title: AppStrings.t('tile_about_title', lang),
+            subtitle: AppStrings.t('tile_about_subtitle', lang),
             onTap: () => showAboutDialog(
               context: context,
               applicationName: 'WeBAlert',
               applicationVersion: '1.0.0',
               applicationIcon: const Icon(Icons.shield_rounded, color: AppColors.primary),
-              children: const [
-                Text(
-                  'Live weather and disaster alerts for every district in Kerala, built for the Kerala Disaster Management Authority.',
-                ),
+              children: [
+                Text(AppStrings.t('about_dialog_body', lang)),
               ],
             ),
           ),
@@ -282,7 +281,7 @@ class ProfileScreen extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _confirmLogout(context),
               icon: const Icon(Icons.logout_rounded, color: AppColors.alertRed, size: 18),
-              label: const Text('Log Out', style: TextStyle(color: AppColors.alertRed)),
+              label: Text(AppStrings.t('log_out_btn', lang), style: const TextStyle(color: AppColors.alertRed)),
               style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.alertRed)),
             ),
           ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 import '../utils/districts.dart';
 
@@ -16,6 +19,7 @@ class DistrictPickerField extends StatelessWidget {
   });
 
   Future<void> _openPicker(BuildContext context) async {
+    final lang = context.read<LanguageProvider>().language;
     final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -42,11 +46,11 @@ class DistrictPickerField extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Select your district', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                      child: Text(AppStrings.t('select_your_district', lang), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const Divider(height: 1),
@@ -58,7 +62,7 @@ class DistrictPickerField extends StatelessWidget {
                         final d = kKeralaDistricts[index];
                         final selected = d.key == selectedKey;
                         return ListTile(
-                          title: Text(d.label),
+                          title: Text(lang.code == 'ml' ? d.labelMl : d.label),
                           trailing: selected ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
                           onTap: () => Navigator.of(ctx).pop(d.key),
                         );
@@ -78,19 +82,20 @@ class DistrictPickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = selectedKey == null ? null : districtLabel(selectedKey!);
+    final lang = context.watch<LanguageProvider>().language;
+    final label = selectedKey == null ? null : districtLabel(selectedKey!, lang);
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => _openPicker(context),
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: 'District',
+          labelText: AppStrings.t('district_label', lang),
           prefixIcon: const Icon(Icons.map_outlined, size: 20),
           errorText: errorText,
           suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
         ),
         child: Text(
-          label ?? 'Choose district',
+          label ?? AppStrings.t('choose_district', lang),
           style: TextStyle(
             color: label == null ? AppColors.textMuted : AppColors.textPrimary,
             fontSize: 15,

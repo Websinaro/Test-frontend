@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/primary_button.dart';
@@ -36,6 +39,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -72,13 +76,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: 0.2),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Real-time weather intelligence and disaster alerts for every district in Kerala.',
-                    style: TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.45),
+                  Text(
+                    AppStrings.t('app_tagline', lang),
+                    style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.45),
                   ),
                   const Spacer(flex: 3),
                   PrimaryButton(
-                    label: 'Create an Account',
+                    label: AppStrings.t('create_account', lang),
                     icon: Icons.person_add_alt_1_rounded,
                     onPressed: () => Navigator.of(context).push(
                       fadeScaleRoute(const SignupScreen()),
@@ -86,17 +90,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   ),
                   const SizedBox(height: 12),
                   SecondaryButton(
-                    label: 'I already have an account',
+                    label: AppStrings.t('already_have_account_btn', lang),
                     icon: Icons.login_rounded,
                     onPressed: () => Navigator.of(context).push(
                       fadeScaleRoute(const LoginScreen()),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Center(
+                  Center(
                     child: Text(
-                      'Kerala State Disaster Management Authority',
-                      style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                      AppStrings.t('kdma_footer', lang),
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
                       textAlign: TextAlign.center,
                     ),
                   ),

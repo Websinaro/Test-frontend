@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../localization/app_language.dart';
+import '../localization/app_strings.dart';
 import 'local_cache.dart';
 
 class BackupResult {
@@ -65,7 +67,7 @@ class BackupService {
     return dir;
   }
 
-  Future<BackupResult> backupNow() async {
+  Future<BackupResult> backupNow([AppLanguage lang = AppLanguage.english]) async {
     try {
       final data = await LocalCache.instance.exportAll();
       data['_backup_created_at'] = DateTime.now().toIso8601String();
@@ -93,17 +95,18 @@ class BackupService {
 
       return BackupResult(
         success: true,
-        message: usedPublicFolder
-            ? 'Backup saved to Documents/$_folderName on your device storage.'
-            : 'Backup saved to the app\'s external folder (grant "All files access" for a Documents/$_folderName copy).',
+        message: (usedPublicFolder
+                ? AppStrings.t('backup_saved_public', lang)
+                : AppStrings.t('backup_saved_private', lang))
+            .replaceAll('{folder}', _folderName),
         filePath: file.path,
       );
     } catch (e) {
-      return BackupResult(success: false, message: 'Backup failed: $e');
+      return BackupResult(success: false, message: '${AppStrings.t('backup_failed_prefix', lang)} $e');
     }
   }
 
-  Future<BackupResult> restoreNow() async {
+  Future<BackupResult> restoreNow([AppLanguage lang = AppLanguage.english]) async {
     try {
       File? file;
       final hasPublicAccess = await requestStoragePermission();
@@ -114,16 +117,16 @@ class BackupService {
       file ??= File('${(await _privateBackupDir()).path}/$_fileName');
 
       if (!await file.exists()) {
-        return const BackupResult(success: false, message: 'No backup file found on this device yet.');
+        return BackupResult(success: false, message: AppStrings.t('restore_no_backup', lang));
       }
 
       final content = await file.readAsString();
       final data = jsonDecode(content) as Map<String, dynamic>;
       await LocalCache.instance.importAll(data);
 
-      return BackupResult(success: true, message: 'Backup restored successfully.', filePath: file.path);
+      return BackupResult(success: true, message: AppStrings.t('restore_success', lang), filePath: file.path);
     } catch (e) {
-      return BackupResult(success: false, message: 'Restore failed: $e');
+      return BackupResult(success: false, message: '${AppStrings.t('restore_failed_prefix', lang)} $e');
     }
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../services/local_cache.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
@@ -26,8 +29,9 @@ class _PermissionScreenState extends State<PermissionScreen> {
     } catch (_) {
       setState(() => _locationGranted = false);
       if (mounted) {
+        final lang = context.read<LanguageProvider>().language;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location access is needed for local weather alerts. You can enable it later from Settings.')),
+          SnackBar(content: Text(AppStrings.t('location_denied_snackbar', lang))),
         );
       }
     } finally {
@@ -45,6 +49,7 @@ class _PermissionScreenState extends State<PermissionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -54,17 +59,17 @@ class _PermissionScreenState extends State<PermissionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              const Text('Before we begin', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+              Text(AppStrings.t('before_we_begin', lang), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              const Text(
-                'WeBAlert needs a couple of permissions to keep you informed during weather events across Kerala.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14.5, height: 1.4),
+              Text(
+                AppStrings.t('permission_intro', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14.5, height: 1.4),
               ),
               const SizedBox(height: 32),
               _PermissionTile(
                 icon: Icons.my_location_rounded,
-                title: 'Location Access',
-                description: 'Used to fetch live weather and disaster alerts for exactly where you are.',
+                title: AppStrings.t('location_access_title', lang),
+                description: AppStrings.t('location_access_desc', lang),
                 granted: _locationGranted,
                 trailing: _locationGranted
                     ? const Icon(Icons.check_circle_rounded, color: AppColors.alertGreen)
@@ -76,24 +81,24 @@ class _PermissionScreenState extends State<PermissionScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                               )
-                            : const Text('Allow'),
+                            : Text(AppStrings.t('allow_btn', lang)),
                       ),
               ),
               const SizedBox(height: 14),
-              const _PermissionTile(
+              _PermissionTile(
                 icon: Icons.wifi_rounded,
-                title: 'Internet Access',
-                description: 'Required to load live weather data and sync your account. Granted automatically.',
+                title: AppStrings.t('internet_access_title', lang),
+                description: AppStrings.t('internet_access_desc', lang),
                 granted: true,
-                trailing: Icon(Icons.check_circle_rounded, color: AppColors.alertGreen),
+                trailing: const Icon(Icons.check_circle_rounded, color: AppColors.alertGreen),
               ),
               const Spacer(),
-              const Text(
-                'You can change these anytime from your phone\'s Settings.',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              Text(
+                AppStrings.t('settings_note', lang),
+                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
               const SizedBox(height: 14),
-              PrimaryButton(label: 'Continue', onPressed: _continue),
+              PrimaryButton(label: AppStrings.t('continue_btn', lang), onPressed: _continue),
             ],
           ),
         ),

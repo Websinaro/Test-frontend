@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/weather_models.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/alert_banner.dart';
 import '../../widgets/daily_forecast_list.dart';
@@ -35,6 +38,7 @@ class WeatherDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final current = weather.current;
     final gradient = AppColors.weatherGradient(icon: current.weatherIcon, isDay: current.isDaytime);
     final updated = DateFormat('h:mm a').format(weather.fetchedAt);
@@ -102,7 +106,7 @@ class WeatherDetailView extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Feels like ${current.feelsLike.round()}°  ·  Updated $updated${usingCache ? ' (offline)' : ''}',
+                  '${AppStrings.t('feels_like_label', lang)} ${current.feelsLike.round()}°  ·  ${AppStrings.t('updated_label', lang)} $updated${usingCache ? ' ${AppStrings.t('offline_suffix', lang)}' : ''}',
                   style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
                 ),
               ],
@@ -127,7 +131,7 @@ class WeatherDetailView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      cacheMessage ?? "You're offline - showing the last saved update.",
+                      cacheMessage ?? AppStrings.t('offline_cached_default', lang),
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ),
@@ -135,11 +139,11 @@ class WeatherDetailView extends StatelessWidget {
               ),
             ),
           AlertBanner(level: weather.alertLevel),
-          const _SectionLabel('Hourly Forecast'),
+          _SectionLabel(AppStrings.t('hourly_forecast', lang)),
           const SizedBox(height: 8),
           HourlyForecastStrip(hourly: weather.hourly),
           const SizedBox(height: 22),
-          const _SectionLabel('7-Day Forecast'),
+          _SectionLabel(AppStrings.t('seven_day_forecast', lang)),
           const SizedBox(height: 6),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -152,7 +156,7 @@ class WeatherDetailView extends StatelessWidget {
             child: DailyForecastList(daily: weather.daily),
           ),
           const SizedBox(height: 22),
-          const _SectionLabel('Details'),
+          _SectionLabel(AppStrings.t('details', lang)),
           const SizedBox(height: 8),
           DetailGrid(current: current, airQuality: weather.airQuality, daily: weather.daily),
           const SizedBox(height: 32),

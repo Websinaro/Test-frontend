@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_language.dart';
+import '../localization/app_strings.dart';
 import '../models/weather_models.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 
 class _DetailItem {
@@ -32,60 +36,61 @@ class DetailGrid extends StatelessWidget {
     return dirs[idx];
   }
 
-  String _uvCategory(double uv) {
-    if (uv < 3) return 'Low';
-    if (uv < 6) return 'Moderate';
-    if (uv < 8) return 'High';
-    if (uv < 11) return 'Very High';
-    return 'Extreme';
+  String _uvCategory(double uv, AppLanguage lang) {
+    if (uv < 3) return AppStrings.t('uv_low', lang);
+    if (uv < 6) return AppStrings.t('uv_moderate', lang);
+    if (uv < 8) return AppStrings.t('uv_high', lang);
+    if (uv < 11) return AppStrings.t('uv_very_high', lang);
+    return AppStrings.t('uv_extreme', lang);
   }
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final items = <_DetailItem>[
       _DetailItem(
         icon: Icons.water_drop_outlined,
-        label: 'Humidity',
+        label: AppStrings.t('humidity', lang),
         value: '${current.humidity.round()}%',
       ),
       _DetailItem(
         icon: Icons.air_rounded,
-        label: 'Wind',
+        label: AppStrings.t('wind', lang),
         value: '${current.windSpeed.round()} km/h',
         sub: _windDirLabel(current.windDirection),
       ),
       if (current.uvIndex != null)
         _DetailItem(
           icon: Icons.wb_sunny_outlined,
-          label: 'UV Index',
+          label: AppStrings.t('uv_index', lang),
           value: current.uvIndex!.round().toString(),
-          sub: _uvCategory(current.uvIndex!),
+          sub: _uvCategory(current.uvIndex!, lang),
         ),
       _DetailItem(
         icon: Icons.speed_rounded,
-        label: 'Pressure',
+        label: AppStrings.t('pressure', lang),
         value: '${current.pressure.round()} hPa',
       ),
       _DetailItem(
         icon: Icons.brightness_5_rounded,
-        label: 'Sunrise',
+        label: AppStrings.t('sunrise', lang),
         value: _fmtTime(daily.sunrise.isNotEmpty ? daily.sunrise.first : null),
       ),
       _DetailItem(
         icon: Icons.nights_stay_outlined,
-        label: 'Sunset',
+        label: AppStrings.t('sunset', lang),
         value: _fmtTime(daily.sunset.isNotEmpty ? daily.sunset.first : null),
       ),
       if (airQuality?.aqi != null)
         _DetailItem(
           icon: Icons.eco_outlined,
-          label: 'Air Quality',
+          label: AppStrings.t('air_quality', lang),
           value: airQuality!.aqi!.round().toString(),
-          sub: 'US AQI',
+          sub: AppStrings.t('us_aqi', lang),
         ),
       _DetailItem(
         icon: Icons.cloud_outlined,
-        label: 'Cloud Cover',
+        label: AppStrings.t('cloud_cover', lang),
         value: '${current.cloudCover.round()}%',
       ),
     ];

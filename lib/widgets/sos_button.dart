@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
+import '../providers/language_provider.dart';
 import '../providers/sos_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -42,6 +44,7 @@ class _SosButtonState extends State<SosButton> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     final sos = context.watch<SosProvider>();
+    final lang = context.watch<LanguageProvider>().language;
     final isActive = sos.status == SosStatus.active;
     final isSending = sos.status == SosStatus.sending;
     final color = isActive ? AppColors.alertDarkRed : AppColors.alertRed;
@@ -120,7 +123,7 @@ class _SosButtonState extends State<SosButton> with SingleTickerProviderStateMix
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          isActive ? 'ACTIVE' : 'SOS',
+                          isActive ? AppStrings.t('sos_active_label', lang) : 'SOS',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/local_cache.dart';
 import '../../theme/app_colors.dart';
@@ -78,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _showPresidentWelcome() async {
+    final lang = context.read<LanguageProvider>().language;
     await showDialog<void>(
       context: context,
       barrierColor: Colors.black87,
@@ -100,12 +103,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Icon(Icons.workspace_premium_rounded, color: AppColors.presidentGold, size: 30),
               ),
               const SizedBox(height: 16),
-              const Text('President Access Granted', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+              Text(AppStrings.t('president_access_granted', lang), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              const Text(
-                'You now have the State Command view: live alert status across all 14 districts of Kerala.',
+              Text(
+                AppStrings.t('president_welcome_body', lang),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -116,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     foregroundColor: Colors.black,
                   ),
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Enter Command Center'),
+                  child: Text(AppStrings.t('enter_command_center', lang)),
                 ),
               ),
             ],
@@ -128,37 +131,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Log In')),
+      appBar: AppBar(title: Text(AppStrings.t('log_in_title', lang))),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
-              const Text('Welcome back', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              Text(AppStrings.t('welcome_back', lang), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
-              const Text(
-                'Log in to view live weather and disaster alerts.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+              Text(
+                AppStrings.t('login_subtitle', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
               ),
               const SizedBox(height: 26),
               AppTextField(
                 controller: _email,
-                label: 'Email',
+                label: AppStrings.t('email_label', lang),
                 prefixIcon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
-                validator: Validators.email,
+                validator: (v) => Validators.email(v, lang),
               ),
               const SizedBox(height: 14),
               AppTextField(
                 controller: _password,
-                label: 'Password',
+                label: AppStrings.t('password_label', lang),
                 prefixIcon: Icons.lock_outline_rounded,
                 obscure: _obscure,
                 textInputAction: TextInputAction.done,
-                validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
+                validator: (v) => (v == null || v.isEmpty) ? AppStrings.t('enter_password_error', lang) : null,
                 onFieldSubmitted: (_) => _submit(),
                 suffix: IconButton(
                   icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
@@ -170,25 +174,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 onChanged: (v) => setState(() => _remember = v ?? true),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Remember my email', style: TextStyle(fontSize: 13)),
+                title: Text(AppStrings.t('remember_email', lang), style: const TextStyle(fontSize: 13)),
               ),
               const SizedBox(height: 12),
-              PrimaryButton(label: 'Log In', onPressed: _submit, loading: _submitting),
+              PrimaryButton(label: AppStrings.t('login_btn', lang), onPressed: _submit, loading: _submitting),
               const SizedBox(height: 10),
-              const Text(
-                'President / State Coordinator accounts sign in with the same form above — access is granted through your registered role.',
-                style: TextStyle(fontSize: 11.5, color: AppColors.textMuted, height: 1.35),
+              Text(
+                AppStrings.t('president_login_note', lang),
+                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, height: 1.35),
               ),
               const SizedBox(height: 18),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account?", style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  Text(AppStrings.t('no_account_q', lang), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                   TextButton(
                     onPressed: () => Navigator.of(context).pushReplacement(
                       fadeScaleRoute(const SignupScreen()),
                     ),
-                    child: const Text('Sign Up'),
+                    child: Text(AppStrings.t('sign_up_btn', lang)),
                   ),
                 ],
               ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_language.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 
 class AlertPill extends StatelessWidget {
@@ -10,8 +13,9 @@ class AlertPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final color = AppColors.alertColor(level);
-    final label = AppColors.alertLabel(level);
+    final label = AppColors.alertLabel(level, lang);
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 4 : 7),
@@ -51,25 +55,35 @@ class AlertBanner extends StatelessWidget {
 
   const AlertBanner({super.key, required this.level});
 
-  String _description(String level) {
+  String _description(String level, AppLanguage lang) {
+    final ml = lang.code == 'ml';
     switch (level.toLowerCase()) {
       case 'dark_red':
-        return 'Extreme conditions expected. This is a severe, potentially life-threatening situation — follow official Kerala Disaster Management advisories immediately and avoid all non-essential travel.';
+        return ml
+            ? 'അതിതീവ്ര സാഹചര്യങ്ങൾ പ്രതീക്ഷിക്കുന്നു. ഇത് ഗുരുതരവും ജീവന് ഭീഷണിയാകാവുന്നതുമായ സാഹചര്യമാണ് - ഉടൻ ഔദ്യോഗിക കേരള ദുരന്ത നിവാരണ നിർദ്ദേശങ്ങൾ പാലിക്കുകയും അനാവശ്യ യാത്രകൾ ഒഴിവാക്കുകയും ചെയ്യുക.'
+            : 'Extreme conditions expected. This is a severe, potentially life-threatening situation — follow official Kerala Disaster Management advisories immediately and avoid all non-essential travel.';
       case 'light_red':
       case 'red': // backward-compat for any old 4-tier data still cached
-        return 'Severe conditions expected. Follow official Kerala Disaster Management advisories and avoid unnecessary travel.';
+        return ml
+            ? 'ഗുരുതരമായ സാഹചര്യങ്ങൾ പ്രതീക്ഷിക്കുന്നു. ഔദ്യോഗിക കേരള ദുരന്ത നിവാരണ നിർദ്ദേശങ്ങൾ പാലിക്കുകയും അനാവശ്യ യാത്രകൾ ഒഴിവാക്കുകയും ചെയ്യുക.'
+            : 'Severe conditions expected. Follow official Kerala Disaster Management advisories and avoid unnecessary travel.';
       case 'orange':
-        return 'Heightened risk of heavy rain / strong winds. Stay alert and keep emergency contacts handy.';
+        return ml
+            ? 'കനത്ത മഴ / ശക്തമായ കാറ്റ് സാധ്യത കൂടുതലാണ്. ജാഗ്രത പാലിക്കുകയും അടിയന്തര കോൺടാക്റ്റുകൾ കയ്യിൽ വയ്ക്കുകയും ചെയ്യുക.'
+            : 'Heightened risk of heavy rain / strong winds. Stay alert and keep emergency contacts handy.';
       case 'yellow':
-        return 'Weather may turn unfavourable. Keep an eye on updates through the day.';
+        return ml
+            ? 'കാലാവസ്ഥ പ്രതികൂലമായേക്കാം. ദിവസം മുഴുവൻ അപ്ഡേറ്റുകൾ ശ്രദ്ധിക്കുക.'
+            : 'Weather may turn unfavourable. Keep an eye on updates through the day.';
       default:
-        return 'Conditions are normal in this area right now.';
+        return ml ? 'ഈ പ്രദേശത്ത് ഇപ്പോൾ സാഹചര്യങ്ങൾ സാധാരണമാണ്.' : 'Conditions are normal in this area right now.';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (level.toLowerCase() == 'green') return const SizedBox.shrink();
+    final lang = context.watch<LanguageProvider>().language;
     final color = AppColors.alertColor(level);
 
     return Container(
@@ -90,12 +104,12 @@ class AlertBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppColors.alertLabel(level),
+                  AppColors.alertLabel(level, lang),
                   style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 14),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  _description(level),
+                  _description(level, lang),
                   style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5, height: 1.35),
                 ),
               ],

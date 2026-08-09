@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/safety_contact.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/validators.dart';
@@ -86,10 +89,11 @@ class _SafetyContactFormScreenState extends State<SafetyContactFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
+    final lang = context.watch<LanguageProvider>().language;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(isEdit ? 'Edit Contact' : 'Add Safety Contact')),
+      appBar: AppBar(title: Text(isEdit ? AppStrings.t('edit_contact_title', lang) : AppStrings.t('add_safety_contact_title', lang))),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -107,37 +111,37 @@ class _SafetyContactFormScreenState extends State<SafetyContactFormScreen> {
               ),
             AppTextField(
               controller: _name,
-              label: 'Full Name',
+              label: AppStrings.t('full_name', lang),
               prefixIcon: Icons.person_outline_rounded,
               textCapitalization: TextCapitalization.words,
-              validator: Validators.name,
+              validator: (v) => Validators.name(v, lang),
             ),
             const SizedBox(height: 16),
             AppTextField(
               controller: _relationship,
-              label: 'Relationship (optional)',
+              label: AppStrings.t('relationship_optional', lang),
               prefixIcon: Icons.family_restroom_rounded,
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 16),
             AppTextField(
               controller: _phone,
-              label: 'Phone Number',
+              label: AppStrings.t('phone_number', lang),
               prefixIcon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
-              validator: Validators.phone,
+              validator: (v) => Validators.phone(v, lang),
             ),
             const SizedBox(height: 16),
             AppTextField(
               controller: _email,
-              label: 'Email (optional)',
+              label: AppStrings.t('email_optional', lang),
               prefixIcon: Icons.mail_outline_rounded,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             AppTextField(
               controller: _address,
-              label: 'Address (optional)',
+              label: AppStrings.t('address_optional', lang),
               prefixIcon: Icons.location_on_outlined,
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.done,
@@ -153,7 +157,7 @@ class _SafetyContactFormScreenState extends State<SafetyContactFormScreen> {
                 ),
                 child: _saving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(isEdit ? 'Save Changes' : 'Add Contact'),
+                    : Text(isEdit ? AppStrings.t('save_changes', lang) : AppStrings.t('add_contact_btn', lang)),
               ),
             ),
           ],

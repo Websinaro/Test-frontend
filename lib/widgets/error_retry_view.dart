@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 
 class ErrorRetryView extends StatelessWidget {
@@ -16,6 +19,7 @@ class ErrorRetryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -30,7 +34,7 @@ class ErrorRetryView extends StatelessWidget {
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
             ),
             const SizedBox(height: 18),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            ElevatedButton(onPressed: onRetry, child: Text(AppStrings.t('retry', lang))),
           ],
         ),
       ),

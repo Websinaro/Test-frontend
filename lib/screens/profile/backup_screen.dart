@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
+import '../../providers/language_provider.dart';
 import '../../services/backup_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/primary_button.dart';
@@ -21,7 +24,8 @@ class _BackupScreenState extends State<BackupScreen> {
       _working = true;
       _lastMessage = null;
     });
-    final result = await BackupService.instance.backupNow();
+    final lang = context.read<LanguageProvider>().language;
+    final result = await BackupService.instance.backupNow(lang);
     setState(() {
       _working = false;
       _lastMessage = result.message;
@@ -34,7 +38,8 @@ class _BackupScreenState extends State<BackupScreen> {
       _working = true;
       _lastMessage = null;
     });
-    final result = await BackupService.instance.restoreNow();
+    final lang = context.read<LanguageProvider>().language;
+    final result = await BackupService.instance.restoreNow(lang);
     setState(() {
       _working = false;
       _lastMessage = result.message;
@@ -44,15 +49,16 @@ class _BackupScreenState extends State<BackupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Backup & Restore')),
+      appBar: AppBar(title: Text(AppStrings.t('backup_restore_title', lang))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          const Text(
-            'WeBAlert automatically keeps your profile and latest weather saved on this device so you can view them offline.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
+          Text(
+            AppStrings.t('backup_intro', lang),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
           ),
           const SizedBox(height: 18),
           Container(
@@ -62,24 +68,24 @@ class _BackupScreenState extends State<BackupScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.cardBorder),
             ),
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.folder_shared_outlined, color: AppColors.primary, size: 22),
-                SizedBox(width: 12),
+                const Icon(Icons.folder_shared_outlined, color: AppColors.primary, size: 22),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'You can also save a portable copy to Documents/WeBAlert on your device storage - it survives even if the app is uninstalled, and can be shared or moved to a computer.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
+                    AppStrings.t('backup_portable_note', lang),
+                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 26),
-          PrimaryButton(label: 'Backup Now', icon: Icons.save_alt_rounded, onPressed: _backup, loading: _working),
+          PrimaryButton(label: AppStrings.t('backup_now_btn', lang), icon: Icons.save_alt_rounded, onPressed: _backup, loading: _working),
           const SizedBox(height: 12),
-          SecondaryButton(label: 'Restore from Backup', icon: Icons.restore_rounded, onPressed: _working ? null : _restore),
+          SecondaryButton(label: AppStrings.t('restore_from_backup_btn', lang), icon: Icons.restore_rounded, onPressed: _working ? null : _restore),
           if (_lastMessage != null) ...[
             const SizedBox(height: 20),
             Container(

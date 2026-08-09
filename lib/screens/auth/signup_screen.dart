@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/page_transitions.dart';
@@ -46,7 +48,8 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() => _districtError = Validators.district(_districtKey));
+    final lang = context.read<LanguageProvider>().language;
+    setState(() => _districtError = Validators.district(_districtKey, lang));
     final formOk = _formKey.currentState?.validate() ?? false;
     if (!formOk || _districtError != null) return;
 
@@ -64,7 +67,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account created for ${_email.text.trim()}. Please log in.')),
+        SnackBar(content: Text(
+          '${AppStrings.t('account_created_prefix', lang)} ${_email.text.trim()}. ${AppStrings.t('account_created_suffix', lang)}',
+        )),
       );
       Navigator.of(context).pushReplacement(
         fadeScaleRoute(LoginScreen(prefilledEmail: _email.text.trim())),
@@ -79,42 +84,43 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(title: Text(AppStrings.t('create_account_title', lang))),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
             children: [
-              const Text(
-                'Sign up to receive live weather and disaster alerts for your district.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
+              Text(
+                AppStrings.t('signup_subtitle', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.4),
               ),
               const SizedBox(height: 22),
               AppTextField(
                 controller: _name,
-                label: 'Full Name',
+                label: AppStrings.t('full_name', lang),
                 prefixIcon: Icons.person_outline_rounded,
                 textCapitalization: TextCapitalization.words,
-                validator: Validators.name,
+                validator: (v) => Validators.name(v, lang),
               ),
               const SizedBox(height: 14),
               AppTextField(
                 controller: _email,
-                label: 'Email',
+                label: AppStrings.t('email_label', lang),
                 prefixIcon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
-                validator: Validators.email,
+                validator: (v) => Validators.email(v, lang),
               ),
               const SizedBox(height: 14),
               AppTextField(
                 controller: _phone,
-                label: 'Phone Number',
+                label: AppStrings.t('phone_number', lang),
                 prefixIcon: Icons.call_outlined,
                 keyboardType: TextInputType.phone,
-                validator: Validators.phone,
+                validator: (v) => Validators.phone(v, lang),
               ),
               const SizedBox(height: 14),
               DistrictPickerField(
@@ -128,10 +134,10 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 14),
               AppTextField(
                 controller: _password,
-                label: 'Password',
+                label: AppStrings.t('password_label', lang),
                 prefixIcon: Icons.lock_outline_rounded,
                 obscure: _obscurePass,
-                validator: Validators.password,
+                validator: (v) => Validators.password(v, lang),
                 suffix: IconButton(
                   icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
                   onPressed: () => setState(() => _obscurePass = !_obscurePass),
@@ -140,11 +146,11 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 14),
               AppTextField(
                 controller: _confirmPassword,
-                label: 'Confirm Password',
+                label: AppStrings.t('confirm_password', lang),
                 prefixIcon: Icons.lock_outline_rounded,
                 obscure: _obscureConfirm,
                 textInputAction: TextInputAction.done,
-                validator: (v) => Validators.confirmPassword(v, _password.text),
+                validator: (v) => Validators.confirmPassword(v, _password.text, lang),
                 suffix: IconButton(
                   icon: Icon(_obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
                   onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
@@ -161,10 +167,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   value: _isPresident,
                   onChanged: (v) => setState(() => _isPresident = v),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                  title: const Text('President / State Coordinator', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
-                  subtitle: const Text(
-                    'Enable this only if you hold an official access code for the state command dashboard.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                  title: Text(AppStrings.t('president_switch_title', lang), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    AppStrings.t('president_switch_subtitle', lang),
+                    style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -172,25 +178,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 14),
                 AppTextField(
                   controller: _accessCode,
-                  label: 'Official Access Code',
+                  label: AppStrings.t('official_access_code', lang),
                   prefixIcon: Icons.verified_user_outlined,
                   obscure: true,
                   textInputAction: TextInputAction.done,
-                  validator: (v) => _isPresident ? Validators.required(v, message: 'Enter the access code') : null,
+                  validator: (v) => _isPresident
+                      ? Validators.required(v, message: AppStrings.t('enter_access_code_error', lang))
+                      : null,
                 ),
               ],
               const SizedBox(height: 26),
-              PrimaryButton(label: 'Sign Up', onPressed: _submit, loading: _submitting),
+              PrimaryButton(label: AppStrings.t('sign_up_btn', lang), onPressed: _submit, loading: _submitting),
               const SizedBox(height: 18),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Already have an account?', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  Text(AppStrings.t('already_have_account_q', lang), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                   TextButton(
                     onPressed: () => Navigator.of(context).pushReplacement(
                       fadeScaleRoute(const LoginScreen()),
                     ),
-                    child: const Text('Log In'),
+                    child: Text(AppStrings.t('log_in_title', lang)),
                   ),
                 ],
               ),

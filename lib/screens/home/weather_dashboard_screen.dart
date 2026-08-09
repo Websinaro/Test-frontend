@@ -54,7 +54,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isPresident ? 'State Command Center' : 'WeBAlert'),
+        title: Text(isPresident ? AppStrings.t('state_command_center', lang) : 'WeBAlert'),
         actions: [
           IconButton(
             icon: const Icon(Icons.menu_book_rounded),
@@ -71,7 +71,7 @@ class _WeatherDashboardScreenState extends State<WeatherDashboardScreen> {
           else
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              tooltip: 'Alerts',
+              tooltip: AppStrings.t('alerts_tooltip', lang),
               onPressed: () => Navigator.of(context).push(fadeScaleRoute(const NotificationInboxScreen())),
             ),
         ],
@@ -91,6 +91,7 @@ class _CitizenWeatherBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<WeatherProvider>();
+    final lang = context.watch<LanguageProvider>().language;
     final weather = provider.weather;
 
     Widget child;
@@ -103,7 +104,7 @@ class _CitizenWeatherBody extends StatelessWidget {
       final isPermission = (provider.errorMessage ?? '').toLowerCase().contains('permission');
       child = ErrorRetryView(
         icon: isPermission ? Icons.location_off_rounded : Icons.cloud_off_rounded,
-        message: provider.errorMessage ?? 'Could not load weather. Pull down to retry.',
+        message: provider.errorMessage ?? AppStrings.t('weather_load_error', lang),
         onRetry: () => provider.loadFromDeviceLocation(),
       );
       stateKey = 'error';
@@ -113,8 +114,8 @@ class _CitizenWeatherBody extends StatelessWidget {
     } else {
       child = WeatherDetailView(
         weather: weather,
-        locationLabel: provider.activeLocationLabel ?? weather.locationName ?? 'Your Location',
-        subLabel: 'Live GPS location',
+        locationLabel: provider.activeLocationLabel ?? weather.locationName ?? AppStrings.t('your_location', lang),
+        subLabel: AppStrings.t('live_gps_location', lang),
         usingCache: provider.usingCache,
         locationDisabled: provider.locationDisabled,
         cacheMessage: provider.errorMessage,
@@ -139,20 +140,21 @@ class _LoadingBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final lang = context.watch<LanguageProvider>().language;
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: AppColors.primary),
+          const SizedBox(height: 16),
           Text(
-            'Fetching live weather…',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            AppStrings.t('fetching_weather', lang),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            'First request may take a moment while the server wakes up.',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+            AppStrings.t('first_request_note', lang),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5),
           ),
         ],
       ),
@@ -170,6 +172,7 @@ class _PresidentOverviewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<WeatherProvider>();
+    final lang = context.watch<LanguageProvider>().language;
 
     return RefreshIndicator(
       color: AppColors.primary,
@@ -183,7 +186,7 @@ class _PresidentOverviewBody extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Live status across all 14 districts',
+                  AppStrings.t('district_status_live', lang),
                   style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ),
@@ -218,7 +221,7 @@ class _PresidentOverviewBody extends StatelessWidget {
                 final d = kKeralaDistricts[index];
                 final w = provider.districtWeather[d.key];
                 return DistrictAlertCard(
-                  label: d.label,
+                  label: lang.code == 'ml' ? d.labelMl : d.label,
                   weather: w,
                   onTap: () => Navigator.of(context).push(
                     fadeScaleRoute(WeatherDetailScreen(districtKey: d.key)),
@@ -238,6 +241,8 @@ class _SeverityLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
+
     int countLevel(String level) {
       return districtWeather.values.where((w) => w.alertLevel.toLowerCase() == level).length;
     }
@@ -265,10 +270,10 @@ class _SeverityLegend extends StatelessWidget {
       ),
       child: Row(
         children: [
-          chip('green', 'Clear'),
-          chip('yellow', 'Watch'),
-          chip('orange', 'Warning'),
-          chip('red', 'Severe'),
+          chip('green', AppStrings.t('legend_clear', lang)),
+          chip('yellow', AppStrings.t('legend_watch', lang)),
+          chip('orange', AppStrings.t('legend_warning', lang)),
+          chip('red', AppStrings.t('legend_severe', lang)),
         ],
       ),
     );

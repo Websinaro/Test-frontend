@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/safety_contact.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/safety_provider.dart';
 import '../../theme/app_colors.dart';
 import 'safety_contact_form_screen.dart';
@@ -35,17 +37,18 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
   }
 
   Future<void> _confirmDelete(SafetyContact contact) async {
+    final lang = context.read<LanguageProvider>().language;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Remove this contact?'),
-        content: Text('${contact.name} will no longer be notified if you send an SOS.'),
+        title: Text(AppStrings.t('remove_contact_title', lang)),
+        content: Text('${contact.name} ${AppStrings.t('remove_contact_body_suffix', lang)}'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppStrings.t('cancel', lang))),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Remove', style: TextStyle(color: AppColors.alertRed)),
+            child: Text(AppStrings.t('remove', lang), style: const TextStyle(color: AppColors.alertRed)),
           ),
         ],
       ),
@@ -64,9 +67,10 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Safety Circle')),
+      appBar: AppBar(title: Text(AppStrings.t('safety_circle_title', lang))),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         onPressed: () => _openForm(),
@@ -102,14 +106,14 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
                   children: [
                     const Icon(Icons.shield_outlined, size: 48, color: AppColors.textMuted),
                     const SizedBox(height: 16),
-                    const Text(
-                      'No safety contacts yet',
-                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
+                    Text(
+                      AppStrings.t('no_contacts_title', lang),
+                      style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Add up to 5 trusted people. They\'ll be notified with your live location if you press SOS.',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    Text(
+                      AppStrings.t('no_contacts_body', lang),
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -159,9 +163,9 @@ class _SafetyContactsScreenState extends State<SafetyContactsScreen> {
                           if (value == 'edit') _openForm(existing: contact);
                           if (value == 'delete') _confirmDelete(contact);
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Remove')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(value: 'edit', child: Text(AppStrings.t('edit', lang))),
+                          PopupMenuItem(value: 'delete', child: Text(AppStrings.t('remove', lang))),
                         ],
                       ),
                     ],

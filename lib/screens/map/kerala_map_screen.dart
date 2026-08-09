@@ -2,8 +2,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../models/kerala_map_models.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/error_retry_view.dart';
@@ -34,11 +38,12 @@ class _KeralaMapScreenState extends State<KeralaMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Text('Kerala Risk Map'),
+        title: Text(AppStrings.t('kerala_risk_map_title', lang)),
       ),
       body: FutureBuilder<KeralaMapResponse>(
         future: _future,
@@ -87,7 +92,7 @@ class _KeralaMapScreenState extends State<KeralaMapScreen> {
                         width: 60,
                         height: 60,
                         child: GestureDetector(
-                          onTap: () => _showDistrictSheet(context, d),
+                          onTap: () => _showDistrictSheet(context, d, lang),
                           child: _DistrictMarker(district: d),
                         ),
                       );
@@ -95,7 +100,7 @@ class _KeralaMapScreenState extends State<KeralaMapScreen> {
                   ),
                 ],
               ),
-              Positioned(bottom: 16, left: 16, right: 16, child: _Legend()),
+              Positioned(bottom: 16, left: 16, right: 16, child: _Legend(lang: lang)),
             ],
           );
         },
@@ -103,7 +108,7 @@ class _KeralaMapScreenState extends State<KeralaMapScreen> {
     );
   }
 
-  void _showDistrictSheet(BuildContext context, DistrictMapPoint d) {
+  void _showDistrictSheet(BuildContext context, DistrictMapPoint d, AppLanguage lang) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surfaceElevated,
@@ -139,16 +144,16 @@ class _KeralaMapScreenState extends State<KeralaMapScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              AppColors.alertLabel(d.alertLevel),
+              AppColors.alertLabel(d.alertLevel, lang),
               style: TextStyle(color: AppColors.alertColor(d.alertLevel), fontSize: 14),
             ),
             const SizedBox(height: 16),
-            _statRow('Condition', d.weatherLabel),
-            _statRow('Temperature', '${d.temperature.toStringAsFixed(1)}°C'),
-            _statRow('Humidity', '${d.humidity.toStringAsFixed(0)}%'),
-            _statRow('Rain Probability', '${d.rainProbability.toStringAsFixed(0)}%'),
-            _statRow('Wind', '${d.windSpeed.toStringAsFixed(1)} km/h, gusts ${d.windGusts.toStringAsFixed(1)} km/h'),
-            _statRow('Wind Direction', '${d.windDirection.toStringAsFixed(0)}° (${_compass(d.windDirection)})'),
+            _statRow(AppStrings.t('condition_label', lang), d.weatherLabel),
+            _statRow(AppStrings.t('temperature_label', lang), '${d.temperature.toStringAsFixed(1)}°C'),
+            _statRow(AppStrings.t('humidity', lang), '${d.humidity.toStringAsFixed(0)}%'),
+            _statRow(AppStrings.t('rain_probability_label', lang), '${d.rainProbability.toStringAsFixed(0)}%'),
+            _statRow(AppStrings.t('wind', lang), '${d.windSpeed.toStringAsFixed(1)} km/h, gusts ${d.windGusts.toStringAsFixed(1)} km/h'),
+            _statRow(AppStrings.t('wind_direction_label', lang), '${d.windDirection.toStringAsFixed(0)}° (${_compass(d.windDirection)})'),
           ],
         ),
       ),
@@ -208,14 +213,17 @@ class _DistrictMarker extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
+  final AppLanguage lang;
+  const _Legend({required this.lang});
+
   @override
   Widget build(BuildContext context) {
-    final items = const [
-      ['dark_red', 'Very High'],
-      ['light_red', 'High'],
-      ['orange', 'Risk'],
-      ['yellow', 'Low Risk'],
-      ['green', 'Safe'],
+    final items = [
+      ['dark_red', AppStrings.t('legend_very_high', lang)],
+      ['light_red', AppStrings.t('legend_high', lang)],
+      ['orange', AppStrings.t('legend_risk', lang)],
+      ['yellow', AppStrings.t('legend_low_risk', lang)],
+      ['green', AppStrings.t('legend_safe', lang)],
     ];
 
     return Container(

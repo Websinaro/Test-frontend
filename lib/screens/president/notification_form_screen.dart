@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/notification_item.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
@@ -53,11 +55,12 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
   }
 
   Future<void> _submit() async {
+    final lang = context.read<LanguageProvider>().language;
     final formOk = _formKey.currentState?.validate() ?? false;
     if (!formOk) return;
     if (!_statewide && _districtKey == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a target district, or switch to All Kerala.')),
+        SnackBar(content: Text(AppStrings.t('choose_target_district_error', lang))),
       );
       return;
     }
@@ -85,7 +88,7 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEditing ? 'Alert updated.' : 'Alert sent.')),
+        SnackBar(content: Text(_isEditing ? AppStrings.t('alert_updated_msg', lang) : AppStrings.t('alert_sent_msg', lang))),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -97,44 +100,45 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(_isEditing ? 'Edit Alert' : 'New Alert')),
+      appBar: AppBar(title: Text(_isEditing ? AppStrings.t('edit_alert_title', lang) : AppStrings.t('new_alert_title', lang))),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
             children: [
-              const Text(
-                'This will be pushed as an SOS-style notification to every device in the target area.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+              Text(
+                AppStrings.t('push_notice', lang),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 20),
               AppTextField(
                 controller: _title,
-                label: 'Alert Title',
+                label: AppStrings.t('alert_title_label', lang),
                 prefixIcon: Icons.title_rounded,
                 textCapitalization: TextCapitalization.sentences,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+                validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.t('enter_title_error', lang) : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _message,
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a message' : null,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
+                validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.t('enter_message_error', lang) : null,
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('message_label', lang),
                   alignLabelWithHint: true,
-                  prefixIcon: Padding(
+                  prefixIcon: const Padding(
                     padding: EdgeInsets.only(bottom: 90),
                     child: Icon(Icons.message_outlined, size: 20),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Severity', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(AppStrings.t('severity_label', lang), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -143,7 +147,7 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
                   final selected = _severity == level;
                   final color = AppColors.alertColor(level);
                   return ChoiceChip(
-                    label: Text(AppColors.alertLabel(level)),
+                    label: Text(AppColors.alertLabel(level, lang)),
                     selected: selected,
                     onSelected: (_) => setState(() => _severity = level),
                     selectedColor: color.withValues(alpha: 0.22),
@@ -158,7 +162,7 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 22),
-              const Text('Target Area', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(AppStrings.t('target_area_label', lang), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               Container(
                 decoration: BoxDecoration(
@@ -172,8 +176,8 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
                       value: true,
                       groupValue: _statewide,
                       onChanged: (v) => setState(() => _statewide = v ?? true),
-                      title: const Text('All Kerala', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Broadcast statewide', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                      title: Text(AppStrings.t('all_kerala_radio', lang), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text(AppStrings.t('broadcast_statewide', lang), style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
                       activeColor: AppColors.presidentGold,
                     ),
                     const Divider(height: 1),
@@ -181,9 +185,9 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
                       value: false,
                       groupValue: _statewide,
                       onChanged: (v) => setState(() => _statewide = v ?? false),
-                      title: const Text('Specific District', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      title: Text(AppStrings.t('specific_district', lang), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(
-                        _districtKey != null ? districtLabel(_districtKey!) : 'Choose a district below',
+                        _districtKey != null ? districtLabel(_districtKey!, lang) : AppStrings.t('choose_district_below', lang),
                         style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                       ),
                       activeColor: AppColors.presidentGold,
@@ -200,7 +204,7 @@ class _NotificationFormScreenState extends State<NotificationFormScreen> {
               ],
               const SizedBox(height: 28),
               PrimaryButton(
-                label: _isEditing ? 'Save Changes' : 'Send Alert',
+                label: _isEditing ? AppStrings.t('save_changes_btn', lang) : AppStrings.t('send_alert_btn', lang),
                 icon: _isEditing ? Icons.save_rounded : Icons.campaign_rounded,
                 color: AppColors.presidentGold,
                 loading: _submitting,

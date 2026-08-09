@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_strings.dart';
 import '../../models/weather_models.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/local_cache.dart';
 import '../../theme/app_colors.dart';
@@ -54,12 +56,13 @@ class _DistrictsScreenState extends State<DistrictsScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>().language;
     final myDistrict = auth.currentUser?.district;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Kerala Districts'),
+        title: Text(AppStrings.t('kerala_districts_title', lang)),
         actions: [
           IconButton(
             onPressed: _loading ? null : _loadAll,
@@ -94,7 +97,7 @@ class _DistrictsScreenState extends State<DistrictsScreen> {
                 itemBuilder: (context, index) {
                   final d = kKeralaDistricts[index];
                   return DistrictAlertCard(
-                    label: d.label,
+                    label: lang.code == 'ml' ? d.labelMl : d.label,
                     weather: _weatherByDistrict[d.key],
                     isHome: d.key == myDistrict,
                     onTap: () => Navigator.of(context).push(

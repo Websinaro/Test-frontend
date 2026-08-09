@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
 import '../models/weather_models.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 import 'weather_icon.dart';
 
@@ -16,6 +19,7 @@ class HourlyForecastStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final count = hourly.length < hoursToShow ? hourly.length : hoursToShow;
     if (count == 0) return const SizedBox.shrink();
 
@@ -58,7 +62,7 @@ class HourlyForecastStrip extends StatelessWidget {
                   Row(
                     children: List.generate(count, (i) {
                       final time = DateTime.tryParse(hourly.time[i]);
-                      final label = i == 0 ? 'Now' : (time != null ? DateFormat('ha').format(time) : '--');
+                      final label = i == 0 ? AppStrings.t('now', lang) : (time != null ? DateFormat('ha').format(time) : '--');
                       final iconData = weatherIconFor(
                         _codeToIcon(hourly.weatherCode[i]),
                         isDay: time == null || (time.hour >= 6 && time.hour < 18),

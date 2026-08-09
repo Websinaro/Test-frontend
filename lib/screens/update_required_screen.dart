@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../localization/app_strings.dart';
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 
 class UpdateRequiredScreen extends StatelessWidget {
@@ -13,6 +16,7 @@ class UpdateRequiredScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return PopScope(
       canPop: false, // blocks the back button - update is mandatory
       child: Scaffold(
@@ -25,9 +29,9 @@ class UpdateRequiredScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.system_update_rounded, color: AppColors.primary, size: 64),
                 const SizedBox(height: 20),
-                const Text(
-                  'Update Required',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
+                Text(
+                  AppStrings.t('update_required_title', lang),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -45,7 +49,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Update Now', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: Text(AppStrings.t('update_now_btn', lang), style: const TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
+import '../localization/app_strings.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 import '../providers/safety_provider.dart';
 import '../providers/sos_provider.dart';
 import '../services/api_service.dart';
@@ -121,8 +123,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       final minSupported = info['min_supported_version']?.toString();
 
       if (minSupported != null && VersionService.instance.isOlderThan(myVersion, minSupported)) {
+        final lang = mounted ? context.read<LanguageProvider>().language : null;
         return info['force_update_message']?.toString() ??
-            'This version of WeBAlert is no longer supported. Please update to continue.';
+            (lang != null ? AppStrings.t('force_update_default', lang) : 'This version of WeBAlert is no longer supported. Please update to continue.');
       }
     } catch (_) {
       // fail open
@@ -139,6 +142,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
@@ -212,9 +216,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 0.2),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Kerala Disaster Management',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    Text(
+                      AppStrings.t('splash_tagline', lang),
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 28),
                     const SizedBox(

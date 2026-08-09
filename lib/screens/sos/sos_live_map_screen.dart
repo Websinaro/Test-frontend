@@ -4,7 +4,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:provider/provider.dart';
+
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../models/sos_models.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../services/routing_service.dart';
@@ -142,6 +147,7 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     final emgLat = _alert?.latitude ?? widget.initialLat;
     final emgLon = _alert?.longitude ?? widget.initialLon;
     final isActive = _alert?.isActive ?? true;
@@ -150,7 +156,7 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.alertDarkRed,
-        title: Text('${widget.senderName} - ${isActive ? "SOS ACTIVE" : "Resolved"}'),
+        title: Text('${widget.senderName} - ${isActive ? AppStrings.t('sos_active_appbar', lang) : AppStrings.t('resolved', lang)}'),
       ),
       body: Stack(
         children: [
@@ -222,9 +228,9 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: AppColors.alertGreen, borderRadius: BorderRadius.circular(12)),
-                child: const Text(
-                  'This person has marked themselves safe.',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+                child: Text(
+                  AppStrings.t('marked_safe_banner', lang),
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -238,7 +244,7 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: AppColors.alertOrange, borderRadius: BorderRadius.circular(12)),
                 child: Text(
-                  'Enable location to see the route and remaining distance: $_locationError',
+                  '${AppStrings.t('enable_location_prefix', lang)} $_locationError',
                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
@@ -248,7 +254,7 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
             left: 16,
             right: 16,
             bottom: 20,
-            child: _DistanceCard(route: _route, hasMyLocation: _myLocation != null),
+            child: _DistanceCard(route: _route, hasMyLocation: _myLocation != null, lang: lang),
           ),
         ],
       ),
@@ -261,8 +267,9 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
 class _DistanceCard extends StatelessWidget {
   final RouteResult? route;
   final bool hasMyLocation;
+  final AppLanguage lang;
 
-  const _DistanceCard({required this.route, required this.hasMyLocation});
+  const _DistanceCard({required this.route, required this.hasMyLocation, required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -294,15 +301,15 @@ class _DistanceCard extends StatelessWidget {
 
   Widget _buildText(BuildContext context) {
     if (!hasMyLocation) {
-      return const Text(
-        'Locating you...',
-        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+      return Text(
+        AppStrings.t('locating_you', lang),
+        style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
       );
     }
     if (route == null) {
-      return const Text(
-        'Calculating route...',
-        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+      return Text(
+        AppStrings.t('calculating_route', lang),
+        style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
       );
     }
 
@@ -332,7 +339,7 @@ class _DistanceCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          r.isRoadRoute ? 'Remaining distance by road' : 'Direct distance (road route unavailable)',
+          r.isRoadRoute ? AppStrings.t('remaining_distance_road', lang) : AppStrings.t('direct_distance', lang),
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],

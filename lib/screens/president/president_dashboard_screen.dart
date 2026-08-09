@@ -3,7 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../localization/app_language.dart';
+import '../../localization/app_strings.dart';
 import '../../models/president_dashboard.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/backend_time.dart';
@@ -54,8 +57,9 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
       });
     } catch (_) {
       if (!mounted) return;
+      final lang = context.read<LanguageProvider>().language;
       setState(() {
-        _error = 'Could not load the dashboard. Pull down to retry.';
+        _error = AppStrings.t('dashboard_load_error', lang);
         _loading = false;
       });
     }
@@ -68,14 +72,15 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().language;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('State Command Dashboard'),
+        title: Text(AppStrings.t('state_command_dashboard_title', lang)),
         actions: [
           IconButton(
             icon: const Icon(Icons.campaign_rounded, color: AppColors.presidentGold),
-            tooltip: 'Notification Center',
+            tooltip: AppStrings.t('notification_center_tooltip', lang),
             onPressed: () => Navigator.of(context).push(fadeScaleRoute(const NotificationCenterScreen())),
           ),
         ],
@@ -84,12 +89,12 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
         color: AppColors.presidentGold,
         backgroundColor: AppColors.surfaceElevated,
         onRefresh: _load,
-        child: _buildBody(),
+        child: _buildBody(lang),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLanguage lang) {
     final dashboard = _dashboard;
 
     if (_loading && dashboard == null) {
@@ -108,21 +113,21 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
           children: [
             _SummaryCard(
               icon: Icons.people_alt_outlined,
-              label: 'Citizens',
+              label: AppStrings.t('citizens_label', lang),
               value: '${dashboard.totalUsers}',
               color: AppColors.primary,
             ),
             const SizedBox(width: 10),
             _SummaryCard(
               icon: Icons.sos_rounded,
-              label: 'Active SOS',
+              label: AppStrings.t('active_sos_label', lang),
               value: '${dashboard.totalActiveSos}',
               color: dashboard.totalActiveSos > 0 ? AppColors.alertLightRed : AppColors.alertGreen,
             ),
             const SizedBox(width: 10),
             _SummaryCard(
               icon: Icons.campaign_outlined,
-              label: 'Live Alerts',
+              label: AppStrings.t('live_alerts_label', lang),
               value: '${dashboard.totalActiveNotifications}',
               color: AppColors.presidentGold,
             ),
@@ -143,15 +148,15 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
               children: [
                 const Icon(Icons.campaign_rounded, color: AppColors.presidentGold),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Notification Center', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
-                      SizedBox(height: 2),
+                      Text(AppStrings.t('tile_notification_center_title', lang), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+                      const SizedBox(height: 2),
                       Text(
-                        'Send, edit or withdraw alerts to a district or all Kerala',
-                        style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                        AppStrings.t('tile_notification_center_subtitle', lang),
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -162,25 +167,25 @@ class _PresidentDashboardScreenState extends State<PresidentDashboardScreen> {
           ),
         ),
         const SizedBox(height: 22),
-        const Text('District-wise Status', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
+        Text(AppStrings.t('district_wise_status', lang), style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
-        const Text(
-          'Registered citizens, active emergencies and live alerts per district',
-          style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+        Text(
+          AppStrings.t('district_wise_status_subtitle', lang),
+          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
-        ...dashboard.districts.map((d) => _DistrictStatRow(stat: d)),
+        ...dashboard.districts.map((d) => _DistrictStatRow(stat: d, lang: lang)),
         if (dashboard.activeSosAlerts.isNotEmpty) ...[
           const SizedBox(height: 22),
           Row(
             children: [
               const Icon(Icons.sensors_rounded, color: AppColors.alertLightRed, size: 18),
               const SizedBox(width: 8),
-              const Text('Active Emergencies', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
+              Text(AppStrings.t('active_emergencies', lang), style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(height: 12),
-          ...dashboard.activeSosAlerts.map((s) => _ActiveSosRow(sos: s, onOpenMap: _openInMaps)),
+          ...dashboard.activeSosAlerts.map((s) => _ActiveSosRow(sos: s, onOpenMap: _openInMaps, lang: lang)),
         ],
       ],
     );
@@ -221,7 +226,8 @@ class _SummaryCard extends StatelessWidget {
 
 class _DistrictStatRow extends StatelessWidget {
   final DistrictStat stat;
-  const _DistrictStatRow({required this.stat});
+  final AppLanguage lang;
+  const _DistrictStatRow({required this.stat, required this.lang});
 
   Color get _indicatorColor {
     if (stat.activeSos > 0) return AppColors.alertLightRed;
@@ -244,7 +250,7 @@ class _DistrictStatRow extends StatelessWidget {
           Container(width: 8, height: 8, decoration: BoxDecoration(color: _indicatorColor, shape: BoxShape.circle)),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(districtLabel(stat.district), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+            child: Text(districtLabel(stat.district, lang), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
           ),
           _MiniStat(icon: Icons.people_outline_rounded, value: stat.registeredUsers),
           const SizedBox(width: 14),
@@ -284,7 +290,8 @@ class _MiniStat extends StatelessWidget {
 class _ActiveSosRow extends StatelessWidget {
   final ActiveSosSummary sos;
   final void Function(double lat, double lon) onOpenMap;
-  const _ActiveSosRow({required this.sos, required this.onOpenMap});
+  final AppLanguage lang;
+  const _ActiveSosRow({required this.sos, required this.onOpenMap, required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +317,7 @@ class _ActiveSosRow extends StatelessWidget {
                 Text(sos.userName, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(
-                  '${districtLabel(sos.district)} · $timeLabel',
+                  '${districtLabel(sos.district, lang)} · $timeLabel',
                   style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                 ),
                 if (sos.message != null && sos.message!.isNotEmpty) ...[
@@ -322,7 +329,7 @@ class _ActiveSosRow extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.map_outlined, color: AppColors.alertLightRed),
-            tooltip: 'View location',
+            tooltip: AppStrings.t('view_location_tooltip', lang),
             onPressed: () => onOpenMap(sos.latitude, sos.longitude),
           ),
         ],
