@@ -51,7 +51,7 @@ class ApiService {
   ApiService._internal();
   static final ApiService instance = ApiService._internal();
 
-  static const String baseUrl = 'https://test-ka-backend.onrender.com';
+  static const String baseUrl = 'https://gotest-g1pt.onrender.com';
   static const Duration _timeout = Duration(seconds: 50);
 
   String? _cachedVersion;
@@ -393,6 +393,17 @@ class ApiService {
       return SosAlert.fromJson(decrypted);
     }
     throw ApiException(_extractError(res));
+  }
+
+  /// Builds the WebSocket URL for the live SOS location feed (see
+  /// SosSocketService), swapping http(s) for ws(s) and carrying the auth
+  /// token as a query param since that's what every platform's WS client
+  /// supports uniformly (the socket still runs over wss:// / TLS).
+  Future<Uri> sosWebSocketUri(int sosId) async {
+    final token = await _requireToken();
+    final httpUri = Uri.parse('$baseUrl/ws/sos/$sosId');
+    final scheme = httpUri.scheme == 'https' ? 'wss' : 'ws';
+    return httpUri.replace(scheme: scheme, queryParameters: {'token': token});
   }
 
   // ---------------------------------------------------------------------

@@ -13,6 +13,7 @@ import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../services/routing_service.dart';
+import '../../services/sos_socket_service.dart';
 import '../../theme/app_colors.dart';
 
 /// Live map shown to a rescuer (protector) after tapping an SOS
@@ -43,19 +44,56 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
   StreamSubscription<Position>? _mySub;
   final MapController _mapController = MapController();
 
+  // Live WebSocket feed of the emergency person's location - the fast path.
+  // The REST poller above stays running too, just on a much slower cadence,
+  // purely as a safety net for when the socket can't get through at all.
+  SosSocketService? _socket;
+  StreamSubscription<SosSocketEvent>? _socketSub;
+  LatLng? _emgLiveLocation;
+  bool _resolvedViaSocket = false;
+
   LatLng? _myLocation;
   RouteResult? _route;
   bool _fetchingRoute = false;
   bool _hasFramedInitialView = false;
   String? _locationError;
 
+  // Rolling average of the rescuer's own GPS speed (m/s), used to estimate
+  // an ETA when the road-routing API is unreachable - a real possibility
+  // in a disaster area where general internet is weak/blocked but the
+  // app's own lightweight WebSocket to its own backend still gets through.
+  final List<double> _recentSpeeds = [];
+
   @override
   void initState() {
     super.initState();
     _alert = null;
     _fetchEmgLocation();
-    _emgPoller = Timer.periodic(const Duration(seconds: 5), (_) => _fetchEmgLocation());
+    // Slow REST fallback poll - the WebSocket below is the primary,
+    // near-instant path. This just guards against the socket silently
+    // failing to connect on a very poor link.
+    _emgPoller = Timer.periodic(const Duration(seconds: 20), (_) => _fetchEmgLocation());
     _startWatchingMyLocation();
+    _connectLiveSocket();
+  }
+
+  Future<void> _connectLiveSocket() async {
+    final socket = SosSocketService(sosId: widget.sosId);
+    _socket = socket;
+    _socketSub = socket.events.listen(_onSocketEvent);
+    await socket.connect();
+  }
+
+  void _onSocketEvent(SosSocketEvent event) {
+    if (!mounted) return;
+    if (event.type == 'location' && event.latitude != null && event.longitude != null) {
+      setState(() => _emgLiveLocation = LatLng(event.latitude!, event.longitude!));
+      _refreshRoute();
+      _fitBoundsOnce();
+    } else if (event.type == 'resolved') {
+      setState(() => _resolvedViaSocket = true);
+      _emgPoller?.cancel();
+    }
   }
 
   Future<void> _startWatchingMyLocation() async {
@@ -78,8 +116,20 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
       _myLocation = LatLng(position.latitude, position.longitude);
       _locationError = null;
     });
+    if (position.speed.isFinite && position.speed > 0) {
+      _recentSpeeds.add(position.speed);
+      if (_recentSpeeds.length > 8) _recentSpeeds.removeAt(0);
+    }
     _refreshRoute();
     _fitBoundsOnce();
+  }
+
+  /// Average of the rescuer's last few GPS speed samples (m/s), or null if
+  /// there aren't enough recent samples to trust yet.
+  double? get _averageSpeedMps {
+    if (_recentSpeeds.length < 2) return null;
+    final avg = _recentSpeeds.reduce((a, b) => a + b) / _recentSpeeds.length;
+    return avg > 0.3 ? avg : null; // ignore near-zero noise while stationary
   }
 
   Future<void> _fetchEmgLocation() async {
@@ -97,14 +147,25 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
     }
   }
 
+  /// The freshest known location of the person in distress: the WebSocket
+  /// feed if it's delivered anything yet (near-instant), falling back to
+  /// the last REST fetch, then the coordinates the notification arrived
+  /// with.
+  LatLng _currentEmgLocation() {
+    if (_emgLiveLocation != null) return _emgLiveLocation!;
+    if (_alert != null) return LatLng(_alert!.latitude, _alert!.longitude);
+    return LatLng(widget.initialLat, widget.initialLon);
+  }
+
   /// Re-fetches the road path + remaining distance whenever either point
   /// moves. Guarded by _fetchingRoute so a slow response doesn't stack up
   /// requests behind a burst of GPS updates.
   Future<void> _refreshRoute() async {
     final me = _myLocation;
-    final emg = _alert;
-    if (me == null || emg == null || _fetchingRoute) return;
+    if (me == null || _fetchingRoute) return;
+    if (_alert == null && _emgLiveLocation == null) return;
 
+    final emg = _currentEmgLocation();
     _fetchingRoute = true;
     try {
       final result = await RoutingService.instance.getRoute(
@@ -126,11 +187,11 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
   void _fitBoundsOnce() {
     if (_hasFramedInitialView) return;
     final me = _myLocation;
-    final emg = _alert;
-    if (me == null || emg == null) return;
+    if (me == null) return;
+    if (_alert == null && _emgLiveLocation == null) return;
 
     _hasFramedInitialView = true;
-    final bounds = LatLngBounds.fromPoints([me, LatLng(emg.latitude, emg.longitude)]);
+    final bounds = LatLngBounds.fromPoints([me, _currentEmgLocation()]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _mapController.fitCamera(
         CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.fromLTRB(60, 120, 60, 220)),
@@ -142,15 +203,18 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
   void dispose() {
     _emgPoller?.cancel();
     _mySub?.cancel();
+    _socketSub?.cancel();
+    _socket?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>().language;
-    final emgLat = _alert?.latitude ?? widget.initialLat;
-    final emgLon = _alert?.longitude ?? widget.initialLon;
-    final isActive = _alert?.isActive ?? true;
+    final emgLocation = _currentEmgLocation();
+    final emgLat = emgLocation.latitude;
+    final emgLon = emgLocation.longitude;
+    final isActive = _resolvedViaSocket ? false : (_alert?.isActive ?? true);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -254,7 +318,12 @@ class _SosLiveMapScreenState extends State<SosLiveMapScreen> {
             left: 16,
             right: 16,
             bottom: 20,
-            child: _DistanceCard(route: _route, hasMyLocation: _myLocation != null, lang: lang),
+            child: _DistanceCard(
+              route: _route,
+              hasMyLocation: _myLocation != null,
+              lang: lang,
+              fallbackSpeedMps: _averageSpeedMps,
+            ),
           ),
         ],
       ),
@@ -269,7 +338,19 @@ class _DistanceCard extends StatelessWidget {
   final bool hasMyLocation;
   final AppLanguage lang;
 
-  const _DistanceCard({required this.route, required this.hasMyLocation, required this.lang});
+  /// The rescuer's own recent average GPS speed (m/s), used to estimate an
+  /// ETA when [route] fell back to a straight line because the road-routing
+  /// API couldn't be reached - a real scenario in a disaster area where
+  /// general internet is weak but this app's own lightweight backend
+  /// connection still gets through.
+  final double? fallbackSpeedMps;
+
+  const _DistanceCard({
+    required this.route,
+    required this.hasMyLocation,
+    required this.lang,
+    this.fallbackSpeedMps,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -317,7 +398,20 @@ class _DistanceCard extends StatelessWidget {
     final distanceText = r.distanceMeters < 1000
         ? '${r.distanceMeters.round()} m'
         : '${(r.distanceMeters / 1000).toStringAsFixed(1)} km';
-    final etaText = r.isRoadRoute && r.duration.inSeconds > 0 ? _formatDuration(r.duration) : null;
+
+    // Prefer the real road-route ETA. If we only have a straight-line
+    // fallback (routing API unreachable) but the rescuer is clearly moving,
+    // estimate an ETA from their own recent speed instead of showing
+    // nothing - clearly labeled as an estimate, not a road ETA.
+    String? etaText;
+    bool etaIsEstimate = false;
+    if (r.isRoadRoute && r.duration.inSeconds > 0) {
+      etaText = _formatDuration(r.duration);
+    } else if (fallbackSpeedMps != null && fallbackSpeedMps! > 0.3) {
+      final seconds = r.distanceMeters / fallbackSpeedMps!;
+      etaText = _formatDuration(Duration(seconds: seconds.round()));
+      etaIsEstimate = true;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +425,7 @@ class _DistanceCard extends StatelessWidget {
             if (etaText != null) ...[
               const SizedBox(width: 10),
               Text(
-                '\u2022 ~$etaText',
+                '\u2022 ~$etaText${etaIsEstimate ? '*' : ''}',
                 style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15),
               ),
             ],
@@ -339,7 +433,11 @@ class _DistanceCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          r.isRoadRoute ? AppStrings.t('remaining_distance_road', lang) : AppStrings.t('direct_distance', lang),
+          r.isRoadRoute
+              ? AppStrings.t('remaining_distance_road', lang)
+              : etaIsEstimate
+                  ? '${AppStrings.t('direct_distance', lang)} \u2022 *ETA estimated from your current speed'
+                  : AppStrings.t('direct_distance', lang),
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],
