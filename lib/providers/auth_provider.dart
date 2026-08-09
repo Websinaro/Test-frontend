@@ -130,7 +130,26 @@ class AuthProvider extends ChangeNotifier {
         currentUser = user;
         isOfflineSession = false;
         await LocalCache.instance.saveUser(user);
-      } on ApiException {
+      } on ApiException catch (e) {
+        // A genuine 401 here (as opposed to a timeout/server-waking/5xx)
+        // already triggered ApiService.onUnauthorized -> forceLogout(),
+        // which deletes the token we *just* saved and resets status to
+        // unauthenticated. Previously this catch swallowed that case too
+        // and fell through to unconditionally set
+        // status = AuthStatus.authenticated below - so the UI happily
+        // carried on as if login succeeded while the secure-storage token
+        // had actually just been wiped. That looked fine for the rest of
+        // this session, but the token was gone, so the very next cold
+        // start (restoreSession) found nothing to restore and bounced the
+        // user back to the login screen - i.e. "persistent login isn't
+        // working". Only fall back to the cached profile for non-auth
+        // failures; a real 401 must fail the login attempt outright.
+        if (e.isUnauthorized) {
+          errorMessage = e.message;
+          status = AuthStatus.unauthenticated;
+          notifyListeners();
+          rethrow;
+        }
         currentUser = await LocalCache.instance.readUser();
         isOfflineSession = true;
       }
