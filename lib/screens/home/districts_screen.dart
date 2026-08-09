@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../localization/app_language.dart';
 import '../../localization/app_strings.dart';
 import '../../models/weather_models.dart';
 import '../../providers/auth_provider.dart';
