@@ -176,11 +176,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   children: [
                     Icon(n.isStatewide ? Icons.public_rounded : Icons.map_outlined, size: 14, color: AppColors.textMuted),
                     const SizedBox(width: 5),
-                    Text(
-                      n.isStatewide ? AppStrings.t('all_kerala', lang) : districtLabel(n.district!, lang),
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                    Flexible(
+                      child: Text(
+                        n.isStatewide ? AppStrings.t('all_kerala', lang) : districtLabel(n.district!, lang),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     Text(_formatTime(n.createdTime), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                   ],
                 ),

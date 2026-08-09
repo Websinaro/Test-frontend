@@ -126,21 +126,29 @@ class _AlertsFeedScreenState extends State<AlertsFeedScreen> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              AppColors.alertLabel(alert.severity, lang),
-                              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                AppColors.alertLabel(alert.severity, lang),
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            alert.district ?? AppStrings.t('state_wide', lang),
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              alert.district ?? AppStrings.t('state_wide', lang),
+                              textAlign: TextAlign.right,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                            ),
                           ),
                           if (isPresident) ...[
                             const SizedBox(width: 4),

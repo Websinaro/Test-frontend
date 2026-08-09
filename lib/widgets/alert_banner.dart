@@ -33,13 +33,17 @@ class AlertPill extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           SizedBox(width: compact ? 5 : 7),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: compact ? 11 : 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                color: color,
+                fontSize: compact ? 11 : 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],
