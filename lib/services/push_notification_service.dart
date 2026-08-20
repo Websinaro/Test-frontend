@@ -132,45 +132,15 @@ class PushNotificationService {
       playSound: true,
       sound: RawResourceAndroidNotificationSound('sos_alarm'),
       visibility: NotificationVisibility.public,
-      // Explicit (matches the plugin's own default, but stated here on
-      // purpose): every _local.show() call for this channel must alert
-      // again - sound, heads-up, everything - rather than silently
-      // updating an existing notification in place. That silent-update
-      // behavior is exactly what made a second real SOS to an already-
-      // notified phone look like "notifications stopped working".
-      onlyAlertOnce: false,
     );
 
     await _local.show(
-      _sosNotificationId(message.data['sos_id']),
+      message.data['sos_id']?.hashCode ?? 0,
       'EMERGENCY: $senderName needs help',
       'Tap to see their live location',
       const NotificationDetails(android: androidDetails),
       payload: payload,
     );
-  }
-
-  /// A stable, collision-resistant notification ID for a given SOS alert.
-  /// Parses the numeric sos_id directly rather than hashing the string, so
-  /// two different alerts can never coincidentally land on the same
-  /// Android notification ID and silently clobber each other.
-  int _sosNotificationId(dynamic sosId) {
-    final parsed = int.tryParse('$sosId');
-    // Notification IDs are 32-bit ints on Android; keep it in range while
-    // still being effectively unique per alert.
-    return parsed != null ? (parsed & 0x7FFFFFFF) : '$sosId'.hashCode;
-  }
-
-  /// Cancels the ongoing SOS notification for an alert that's just been
-  /// marked safe. Without this, the non-dismissible ("ongoing") emergency
-  /// notification stays in the tray forever - and on several Android
-  /// builds, a *new* full-screen-intent notification gets suppressed while
-  /// an old one from the same app is still showing. Clearing it the moment
-  /// the alert resolves is what keeps the next real SOS from silently
-  /// failing to alert on this device.
-  Future<void> _cancelSosNotification(dynamic sosId) async {
-    await _ensureLocalNotificationsInitialized();
-    await _local.cancel(_sosNotificationId(sosId));
   }
 
   /// Dispatches to the right handler based on `data.type` - kept as one
@@ -181,9 +151,6 @@ class PushNotificationService {
     switch (message.data['type']) {
       case 'sos_alert':
         await _showSosNotification(message);
-        break;
-      case 'sos_resolved':
-        await _cancelSosNotification(message.data['sos_id']);
         break;
       case 'admin_alert':
         await _showAdminAlertNotification(message);

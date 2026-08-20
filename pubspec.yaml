@@ -18,11 +18,6 @@ dependencies:
 
   # Networking
   http: ^1.2.2
-
-  # Persistent live-location socket for SOS (see sos_socket_service.dart) -
-  # a single long-lived connection survives weak 2G/3G much better than
-  # repeating full HTTPS requests every few seconds.
-  web_socket_channel: ^3.0.3
   
   # Kerala risk map (OpenStreetMap tiles - free, no API key)
   flutter_map: ^7.0.2
